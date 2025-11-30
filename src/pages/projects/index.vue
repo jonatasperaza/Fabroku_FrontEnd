@@ -1,5 +1,5 @@
 <template>
-  <DashboardComponent />
+  <ProjectComponent />
 </template>
 <script setup lang="ts">
 

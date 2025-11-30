@@ -23,6 +23,8 @@ declare module 'vue-router/auto-routes' {
     '/dashboard/': RouteRecordInfo<'/dashboard/', '/dashboard', Record<never, never>, Record<never, never>>,
     '/documentation/': RouteRecordInfo<'/documentation/', '/documentation', Record<never, never>, Record<never, never>>,
     '/projects/': RouteRecordInfo<'/projects/', '/projects', Record<never, never>, Record<never, never>>,
+    '/projects/[projectId]/': RouteRecordInfo<'/projects/[projectId]/', '/projects/:projectId', { projectId: ParamValue<true> }, { projectId: ParamValue<false> }>,
+    '/projects/[projectId]/[appId]': RouteRecordInfo<'/projects/[projectId]/[appId]', '/projects/:projectId/:appId', { projectId: ParamValue<true>, appId: ParamValue<true> }, { projectId: ParamValue<false>, appId: ParamValue<false> }>,
     '/settings/': RouteRecordInfo<'/settings/', '/settings', Record<never, never>, Record<never, never>>,
   }
 
@@ -55,6 +57,14 @@ declare module 'vue-router/auto-routes' {
     }
     'src/pages/projects/index.vue': {
       routes: '/projects/'
+      views: never
+    }
+    'src/pages/projects/[projectId]/index.vue': {
+      routes: '/projects/[projectId]/'
+      views: never
+    }
+    'src/pages/projects/[projectId]/[appId].vue': {
+      routes: '/projects/[projectId]/[appId]'
       views: never
     }
     'src/pages/settings/index.vue': {
