@@ -1,8 +1,8 @@
-import type { App } from '@/interfaces'
+import type { App, Response } from '@/interfaces'
 import apiClient from '@/plugins/axios'
 
 class AppsService {
-  async getApps (): Promise<App[]> {
+  async getApps (): Promise<Response<App>> {
     const response = await apiClient.get('/apps/apps/')
     return response.data
   }

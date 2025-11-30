@@ -1,12 +1,19 @@
+interface Response<T = any> {
+  count: number
+  next: string | null
+  previous: string | null
+  results: T[]
+}
+
 interface User {
-  id: number
+  id?: number
   username: string
   email: string
   avatar_url?: string
 }
 
 interface Project {
-  id: string
+  id?: string
   name: string
   users: User['id'][]
   created_at?: string
@@ -14,18 +21,18 @@ interface Project {
 }
 
 interface App {
-  id: string
+  id?: string
   name: string
   git: string
   project: Project['id']
   created_at?: string
   updated_at?: string
-  status: 'stopped' | 'running' | 'error' | 'starting'
-  dommain: string | null
+  status?: 'stopped' | 'running' | 'error' | 'starting'
+  domain?: string | null
   port?: number | null
   variables?: Record<string, string> | {}
   task_id?: string | null
   name_dokku?: string | null
 }
 
-export type { App, Project, User }
+export type { App, Project, Response, User }
