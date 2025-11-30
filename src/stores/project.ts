@@ -45,7 +45,9 @@ export const useProjectStore = defineStore('project', () => {
   }
 
   // Criar novo projeto
-  const createProject = async (project: Omit<Project, 'id' | 'created_at' | 'updated_at'>) => {
+  const createProject = async (
+    project: Omit<Project, 'id' | 'created_at' | 'updated_at'>,
+  ) => {
     loading.value = true
     error.value = null
     try {
@@ -66,7 +68,10 @@ export const useProjectStore = defineStore('project', () => {
     loading.value = true
     error.value = null
     try {
-      const updatedProject = await ProjectsService.updateProject(projectId, data)
+      const updatedProject = await ProjectsService.updateProject(
+        projectId,
+        data,
+      )
       const index = projects.value.findIndex(p => p.id === projectId)
       if (index !== -1) {
         projects.value[index] = updatedProject

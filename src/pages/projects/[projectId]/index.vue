@@ -19,8 +19,14 @@
         <v-card-title>Detalhes do Projeto</v-card-title>
         <v-card-text>
           <p><strong>ID:</strong> {{ projectStore.currentProject.id }}</p>
-          <p><strong>Criado em:</strong> {{ formatDate(projectStore.currentProject.created_at) }}</p>
-          <p><strong>Atualizado em:</strong> {{ formatDate(projectStore.currentProject.updated_at) }}</p>
+          <p>
+            <strong>Criado em:</strong>
+            {{ formatDate(projectStore.currentProject.created_at) }}
+          </p>
+          <p>
+            <strong>Atualizado em:</strong>
+            {{ formatDate(projectStore.currentProject.updated_at) }}
+          </p>
         </v-card-text>
       </v-card>
 
@@ -40,12 +46,7 @@
 
       <v-row v-if="!appStore.loading">
         <!-- Lista de apps do projeto -->
-        <v-col
-          v-for="app in projectApps"
-          :key="app.id"
-          cols="12"
-          md="4"
-        >
+        <v-col v-for="app in projectApps" :key="app.id" cols="12" md="4">
           <v-card
             class="h-100"
             hover
@@ -60,7 +61,7 @@
             <v-card-subtitle>{{ app.git }}</v-card-subtitle>
             <v-card-text>
               <v-chip :color="getStatusColor(app.status)" size="small">
-                {{ app.status || 'stopped' }}
+                {{ app.status || "stopped" }}
               </v-chip>
               <span v-if="app.domain" class="ml-2 text-caption">
                 {{ app.domain }}
@@ -81,7 +82,11 @@
         <!-- Empty State -->
         <v-col v-if="projectApps.length === 0" cols="12">
           <v-card class="text-center pa-8">
-            <v-icon class="mb-4" color="grey" size="64">mdi-application-outline</v-icon>
+            <v-icon
+              class="mb-4"
+              color="grey"
+              size="64"
+            >mdi-application-outline</v-icon>
             <h3 class="text-h6 mb-2">Nenhum app neste projeto</h3>
             <p class="text-grey mb-4">Crie seu primeiro app para começar</p>
             <v-btn color="primary" @click="dialogCreate = true">
@@ -116,11 +121,7 @@
         <v-card-actions>
           <v-spacer />
           <v-btn variant="text" @click="dialogCreate = false">Cancelar</v-btn>
-          <v-btn
-            color="primary"
-            :loading="creating"
-            @click="handleCreateApp"
-          >
+          <v-btn color="primary" :loading="creating" @click="handleCreateApp">
             Criar
           </v-btn>
         </v-card-actions>

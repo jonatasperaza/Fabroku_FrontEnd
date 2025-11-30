@@ -60,7 +60,11 @@
       <!-- Empty State -->
       <v-col v-if="projectStore.projects.length === 0" cols="12">
         <v-card class="text-center pa-8">
-          <v-icon class="mb-4" color="grey" size="64">mdi-folder-outline</v-icon>
+          <v-icon
+            class="mb-4"
+            color="grey"
+            size="64"
+          >mdi-folder-outline</v-icon>
           <h3 class="text-h6 mb-2">Nenhum projeto ainda</h3>
           <p class="text-grey mb-4">Crie seu primeiro projeto para começar</p>
           <v-btn color="primary" @click="dialogCreate = true">

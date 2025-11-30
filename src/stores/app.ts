@@ -45,7 +45,12 @@ export const useAppStore = defineStore('app', () => {
   }
 
   // Criar novo app
-  const createApp = async (app: Omit<App, 'id' | 'created_at' | 'updated_at' | 'status' | 'task_id' | 'name_dokku'>) => {
+  const createApp = async (
+    app: Omit<
+      App,
+      'id' | 'created_at' | 'updated_at' | 'status' | 'task_id' | 'name_dokku'
+    >,
+  ) => {
     loading.value = true
     error.value = null
     try {

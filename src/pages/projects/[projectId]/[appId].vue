@@ -28,7 +28,7 @@
             :color="getStatusColor(appStore.currentApp.status)"
             size="small"
           >
-            {{ appStore.currentApp.status || 'stopped' }}
+            {{ appStore.currentApp.status || "stopped" }}
           </v-chip>
         </div>
       </div>
@@ -44,7 +44,9 @@
                     <v-icon>mdi-identifier</v-icon>
                   </template>
                   <v-list-item-title>ID</v-list-item-title>
-                  <v-list-item-subtitle>{{ appStore.currentApp.id }}</v-list-item-subtitle>
+                  <v-list-item-subtitle>{{
+                    appStore.currentApp.id
+                  }}</v-list-item-subtitle>
                 </v-list-item>
 
                 <v-list-item>
@@ -52,7 +54,9 @@
                     <v-icon>mdi-git</v-icon>
                   </template>
                   <v-list-item-title>Repositório</v-list-item-title>
-                  <v-list-item-subtitle>{{ appStore.currentApp.git }}</v-list-item-subtitle>
+                  <v-list-item-subtitle>{{
+                    appStore.currentApp.git
+                  }}</v-list-item-subtitle>
                 </v-list-item>
 
                 <v-list-item v-if="appStore.currentApp.domain">
@@ -61,7 +65,10 @@
                   </template>
                   <v-list-item-title>Domínio</v-list-item-title>
                   <v-list-item-subtitle>
-                    <a :href="`https://${appStore.currentApp.domain}`" target="_blank">
+                    <a
+                      :href="`https://${appStore.currentApp.domain}`"
+                      target="_blank"
+                    >
                       {{ appStore.currentApp.domain }}
                     </a>
                   </v-list-item-subtitle>
@@ -72,7 +79,9 @@
                     <v-icon>mdi-numeric</v-icon>
                   </template>
                   <v-list-item-title>Porta</v-list-item-title>
-                  <v-list-item-subtitle>{{ appStore.currentApp.port }}</v-list-item-subtitle>
+                  <v-list-item-subtitle>{{
+                    appStore.currentApp.port
+                  }}</v-list-item-subtitle>
                 </v-list-item>
 
                 <v-list-item>
@@ -80,7 +89,9 @@
                     <v-icon>mdi-calendar</v-icon>
                   </template>
                   <v-list-item-title>Criado em</v-list-item-title>
-                  <v-list-item-subtitle>{{ formatDate(appStore.currentApp.created_at) }}</v-list-item-subtitle>
+                  <v-list-item-subtitle>{{
+                    formatDate(appStore.currentApp.created_at)
+                  }}</v-list-item-subtitle>
                 </v-list-item>
               </v-list>
             </v-card-text>
@@ -90,7 +101,10 @@
           <v-card v-if="appStore.currentApp.variables">
             <v-card-title>Variáveis de Ambiente</v-card-title>
             <v-card-text>
-              <v-table v-if="Object.keys(appStore.currentApp.variables).length > 0" density="compact">
+              <v-table
+                v-if="Object.keys(appStore.currentApp.variables).length > 0"
+                density="compact"
+              >
                 <thead>
                   <tr>
                     <th>Chave</th>
@@ -98,9 +112,16 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(value, key) in appStore.currentApp.variables" :key="key">
-                    <td><code>{{ key }}</code></td>
-                    <td><code>{{ value }}</code></td>
+                  <tr
+                    v-for="(value, key) in appStore.currentApp.variables"
+                    :key="key"
+                  >
+                    <td>
+                      <code>{{ key }}</code>
+                    </td>
+                    <td>
+                      <code>{{ value }}</code>
+                    </td>
                   </tr>
                 </tbody>
               </v-table>
@@ -139,11 +160,7 @@
               >
                 Parar
               </v-btn>
-              <v-btn
-                block
-                prepend-icon="mdi-file-document"
-                variant="outlined"
-              >
+              <v-btn block prepend-icon="mdi-file-document" variant="outlined">
                 Ver Logs
               </v-btn>
             </v-card-text>
