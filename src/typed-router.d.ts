@@ -21,7 +21,6 @@ declare module 'vue-router/auto-routes' {
     '/': RouteRecordInfo<'/', '/', Record<never, never>, Record<never, never>>,
     '/callback/': RouteRecordInfo<'/callback/', '/callback', Record<never, never>, Record<never, never>>,
     '/dashboard/': RouteRecordInfo<'/dashboard/', '/dashboard', Record<never, never>, Record<never, never>>,
-    '/login/': RouteRecordInfo<'/login/', '/login', Record<never, never>, Record<never, never>>,
   }
 
   /**
@@ -45,10 +44,6 @@ declare module 'vue-router/auto-routes' {
     }
     'src/pages/dashboard/index.vue': {
       routes: '/dashboard/'
-      views: never
-    }
-    'src/pages/login/index.vue': {
-      routes: '/login/'
       views: never
     }
   }

@@ -6,14 +6,15 @@ meta:
 <script setup lang="ts">
   import { onMounted, ref } from 'vue'
   import { useRouter } from 'vue-router'
+  import { useAuthStore } from '@/stores'
 
   const router = useRouter()
+  const authStore = useAuthStore()
   const error = ref<string | null>(null)
   const loading = ref(true)
 
   onMounted(async () => {
     const urlParams = new URLSearchParams(window.location.search)
-    const token = urlParams.get('token')
     const errorParam = urlParams.get('error')
 
     if (errorParam) {
@@ -22,20 +23,23 @@ meta:
       return
     }
 
-    if (!token) {
-      error.value = 'Token de autenticação não encontrado'
-      loading.value = false
-      return
-    }
-
     try {
-      // Armazena o token de acesso
-      localStorage.setItem('github_token', token)
+      // Com cookies httpOnly, o backend já setou os cookies
+      // Apenas verificamos se a autenticação funcionou
+      const isAuthenticated = await authStore.checkAuth()
 
-      // Redireciona para a página de repositórios
-      router.push('/repos')
+      if (isAuthenticated) {
+        // Redireciona para o dashboard
+        router.push('/dashboard')
+      } else {
+        error.value = 'Falha na autenticação. Tente novamente.'
+        loading.value = false
+      }
     } catch (error_) {
-      error.value = error_ instanceof Error ? error_.message : 'Erro ao processar autenticação'
+      error.value
+        = error_ instanceof Error
+          ? error_.message
+          : 'Erro ao processar autenticação'
       loading.value = false
     }
   })
@@ -53,7 +57,9 @@ meta:
       <div v-else-if="error" class="error">
         <h2>Erro na autenticação</h2>
         <p>{{ error }}</p>
-        <button class="retry-button" @click="router.push('/login')">Tentar novamente</button>
+        <button class="retry-button" @click="router.push('/')">
+          Tentar novamente
+        </button>
       </div>
     </div>
   </div>

@@ -17,6 +17,10 @@
 
 <script setup lang="ts">
   import { onMounted } from 'vue'
+  import { useAuthStore } from '@/stores'
+  const authStore = useAuthStore()
 
-  onMounted(() => {})
+  onMounted(() => {
+    authStore.checkAuth()
+  })
 </script>

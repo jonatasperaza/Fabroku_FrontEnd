@@ -42,6 +42,7 @@ meta:
                   prepend-icon="mdi-code-tags"
                   rounded="lg"
                   size="x-large"
+                  @click="login"
                 >
                   Entrar com GitHub
                 </v-btn>
@@ -72,7 +73,14 @@ meta:
   </v-app>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+  import { useAuthStore } from '@/stores'
+  const authStore = useAuthStore()
+
+  function login () {
+    authStore.login()
+  }
+</script>
 
 <style scoped>
 .v-application {
