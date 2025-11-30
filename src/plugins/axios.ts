@@ -5,7 +5,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true,
+  withCredentials: true, // IMPORTANTE: envia cookies automaticamente em cada requisição
 })
 
 let isRefreshing = false
@@ -25,18 +25,8 @@ function processQueue (error: Error | null) {
   failedQueue = []
 }
 
-apiClient.interceptors.request.use(
-  async (config: InternalAxiosRequestConfig) => {
-    const { useAuthStore } = await import('@/stores')
-    const authStore = useAuthStore()
-
-    if (authStore.accessToken) {
-      config.headers.Authorization = `Bearer ${authStore.accessToken}`
-    }
-    return config
-  },
-  error => Promise.reject(error),
-)
+// Com cookies httpOnly, não precisa de interceptor de request para adicionar token
+// O browser envia o cookie automaticamente graças ao withCredentials: true
 
 apiClient.interceptors.response.use(
   response => response,
@@ -63,19 +53,18 @@ apiClient.interceptors.response.use(
     isRefreshing = true
 
     try {
-      const { useAuthStore } = await import('@/stores')
-      const authStore = useAuthStore()
-
-      await authStore.refreshAccessToken()
+      // Chama endpoint de refresh - o backend vai ler o refresh_token do cookie
+      // e setar um novo access_token também via cookie
+      await apiClient.post('/auth/refresh/')
       processQueue(null)
 
+      // Repete a requisição original - agora com o novo cookie
       return apiClient(originalRequest)
     } catch (refreshError) {
       processQueue(refreshError as Error)
 
-      const { useAuthStore } = await import('@/stores')
-      const authStore = useAuthStore()
-      authStore.logout()
+      // Se o refresh falhar, redireciona para login
+      window.location.href = '/login'
 
       throw refreshError
     } finally {

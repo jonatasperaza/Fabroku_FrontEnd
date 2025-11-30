@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { AuthService } from '@/services'
-import { getCookie, removeCookie, setCookie } from '@/utils/cookies'
+import apiClient from '@/plugins/axios'
 
 interface GitHubUser {
   login: string
@@ -13,96 +12,53 @@ interface GitHubUser {
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  // Access token (cookie de sessão - expira rápido)
-  const accessToken = ref<string | null>(getCookie('access_token'))
-
-  // Refresh token (cookie persistente - dura mais)
-  const refreshToken = ref<string | null>(getCookie('refresh_token'))
-
   const user = ref<GitHubUser | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
-  const isRefreshing = ref(false)
 
-  const isAuthenticated = computed(() => !!accessToken.value && !!user.value)
+  // Com cookies httpOnly, verificamos autenticação via endpoint /auth/check/
+  const isAuthenticated = computed(() => !!user.value)
 
-  const setTokens = (access: string, refresh: string) => {
-    accessToken.value = access
-    refreshToken.value = refresh
-
-    setCookie('access_token', access, {
-      days: 0.01, // ~15 minutos
-      secure: true,
-      sameSite: 'strict',
-    })
-
-    setCookie('refresh_token', refresh, {
-      days: 7,
-      secure: true,
-      sameSite: 'strict',
-    })
-  }
-
-  const clearTokens = () => {
-    accessToken.value = null
-    refreshToken.value = null
-    user.value = null
-    removeCookie('access_token')
-    removeCookie('refresh_token')
-  }
-
-  const refreshAccessToken = async (): Promise<boolean> => {
-    if (!refreshToken.value || isRefreshing.value) {
-      return false
-    }
-
-    isRefreshing.value = true
-
+  // Verifica se está autenticado (chama o backend)
+  const checkAuth = async (): Promise<boolean> => {
+    loading.value = true
     try {
-      const response = await AuthService.refreshToken(refreshToken.value)
-      const data = response
-
-      accessToken.value = data?.access
-      setCookie('access_token', data.access, {
-        days: 0.01,
-        secure: true,
-        sameSite: 'strict',
-      })
-
+      const response = await apiClient.get('/auth/check/')
+      user.value = response.data.user || response.data
       return true
-    } catch (error_) {
-      console.error('Erro ao renovar token:', error_)
-      clearTokens()
+    } catch {
+      user.value = null
       return false
     } finally {
-      isRefreshing.value = false
+      loading.value = false
     }
   }
 
+  // Redireciona para login do GitHub
   const login = () => {
-    return AuthService.login()
+    const backendUrl
+      = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+    window.location.href = `${backendUrl}/auth/github/login/`
   }
 
-  const getMe = async () => {
-    const reponse = await AuthService.me()
-    user.value = reponse.data
-  }
-
-  const logout = () => {
-    clearTokens()
+  // Logout - remove cookies no backend
+  const logout = async () => {
+    try {
+      await apiClient.post('/auth/logout/')
+    } catch (error_) {
+      console.error('Erro no logout:', error_)
+    } finally {
+      user.value = null
+      window.location.href = '/'
+    }
   }
 
   return {
-    accessToken,
-    refreshToken,
     user,
     loading,
     error,
     isAuthenticated,
-    setTokens,
-    clearTokens,
-    refreshAccessToken,
-    getMe,
+    checkAuth,
     logout,
     login,
   }

@@ -8,11 +8,41 @@ import { setupLayouts } from 'virtual:generated-layouts'
 // Composables
 import { createRouter, createWebHistory } from 'vue-router'
 import { routes } from 'vue-router/auto-routes'
+// import { useAuthStore } from '@/stores'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: setupLayouts(routes),
 })
+
+// ============================================
+// AUTH GUARD - Descomente para ativar proteção de rotas
+// ============================================
+// Rotas que NÃO precisam de autenticação
+// const publicRoutes = ['/', '/login', '/callback']
+
+// router.beforeEach(async (to, _from, next) => {
+//   const authStore = useAuthStore()
+
+//   // Se é rota pública, permite acesso
+//   if (publicRoutes.includes(to.path)) {
+//     return next()
+//   }
+
+//   // Verifica autenticação se ainda não verificou
+//   if (!authStore.isAuthenticated) {
+//     await authStore.checkAuth()
+//   }
+
+//   // Se não está autenticado, redireciona para login
+//   if (!authStore.isAuthenticated) {
+//     return next('/')
+//   }
+
+//   // Está autenticado, permite acesso
+//   next()
+// })
+// ============================================
 
 // Workaround for https://github.com/vitejs/vite/issues/11804
 router.onError((err, to) => {
