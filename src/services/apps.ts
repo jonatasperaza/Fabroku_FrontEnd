@@ -8,6 +8,13 @@ class AppsService {
     return response.data
   }
 
+  async getAppsByProject (projectId: string): Promise<Response<App>> {
+    const response = await apiClient.get('/apps/apps/', {
+      params: { project: projectId },
+    })
+    return response.data
+  }
+
   async getApp (id: string): Promise<App> {
     const response = await apiClient.get(`/apps/apps/${id}/`)
     return response.data

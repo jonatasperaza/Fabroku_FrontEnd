@@ -127,8 +127,25 @@ export const useAppStore = defineStore('app', () => {
     taskStatus.value = null
   }
 
-  // Buscar apps por projeto
-  const fetchAppsByProject = (projectId: string) => {
+  // Buscar apps por projeto da API
+  const fetchAppsByProject = async (projectId: string) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await AppsService.getAppsByProject(projectId)
+      apps.value = response.results
+      return apps.value
+    } catch (error_) {
+      error.value = 'Erro ao carregar apps do projeto'
+      console.error('Erro ao buscar apps do projeto:', error_)
+      throw error_
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Filtrar apps localmente por projeto (para uso após já ter carregado)
+  const getAppsByProject = (projectId: string) => {
     return apps.value.filter(app => app.project === projectId)
   }
 
@@ -152,6 +169,7 @@ export const useAppStore = defineStore('app', () => {
     updateApp,
     deleteApp,
     fetchAppsByProject,
+    getAppsByProject,
     clearApps,
   }
 })

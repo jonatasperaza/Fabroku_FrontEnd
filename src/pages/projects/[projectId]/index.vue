@@ -178,13 +178,13 @@
     branch: '',
   })
 
-  // Filtra apps pelo projeto atual
-  const projectApps = computed(() => appStore.fetchAppsByProject(projectId))
+  // Apps do projeto atual
+  const projectApps = computed(() => appStore.apps)
 
   onMounted(async () => {
     try {
       await projectStore.fetchProject(projectId)
-      await appStore.fetchApps()
+      await appStore.fetchAppsByProject(projectId)
     } finally {
       loading.value = false
     }

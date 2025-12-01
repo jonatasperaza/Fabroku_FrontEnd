@@ -87,9 +87,20 @@
 
     <v-divider v-if="showFilters" />
 
-    <!-- Área de logs -->
-    <div ref="logsContainer" class="logs-container">
-      <div v-if="filteredLogs.length === 0" class="text-center py-8 text-grey">
+    <!-- Área de logs com infinite scroll -->
+    <v-infinite-scroll
+      ref="logsContainer"
+      class="logs-container"
+      :empty-text="''"
+      :loading="loading"
+      mode="intersect"
+      side="end"
+      @load="handleLoadMore"
+    >
+      <div
+        v-if="filteredLogs.length === 0 && !loading"
+        class="text-center py-8 text-grey"
+      >
         <v-icon class="mb-2" size="48">mdi-file-document-outline</v-icon>
         <p>Nenhum log encontrado</p>
       </div>
@@ -139,19 +150,21 @@
           :model-value="log.progress"
         />
       </div>
-    </div>
 
-    <!-- Carregar mais -->
-    <v-card-actions v-if="hasMore">
-      <v-btn
-        block
-        :loading="loading"
-        variant="text"
-        @click="$emit('load-more')"
-      >
-        Carregar mais
-      </v-btn>
-    </v-card-actions>
+      <template #loading>
+        <v-progress-circular class="ma-4" indeterminate size="24" />
+      </template>
+
+      <template #empty>
+        <div
+          v-if="!hasMore && filteredLogs.length > 0"
+          class="text-center py-4 text-grey"
+        >
+          <v-icon size="20">mdi-check-circle</v-icon>
+          <span class="ml-2">Todos os logs carregados</span>
+        </div>
+      </template>
+    </v-infinite-scroll>
   </v-card>
 </template>
 
@@ -302,6 +315,25 @@
 
   function applyFilters () {
   // Filtros são reativos via computed
+  }
+
+  function handleLoadMore ({
+    done,
+  }: {
+    done: (status: 'ok' | 'empty' | 'error') => void
+  }) {
+    if (!props.hasMore) {
+      done('empty')
+      return
+    }
+
+    emit('load-more')
+
+    // O componente pai vai atualizar hasMore quando não houver mais dados
+    // Usamos um pequeno delay para permitir que a prop seja atualizada
+    setTimeout(() => {
+      done(props.hasMore ? 'ok' : 'empty')
+    }, 500)
   }
 
   function getLastLogId (): number | undefined {

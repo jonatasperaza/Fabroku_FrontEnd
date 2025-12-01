@@ -32,9 +32,23 @@
           hover
           @click="$router.push(`/projects/${project.id}`)"
         >
-          <v-card-title class="d-flex align-center">
-            <v-icon class="mr-2" color="primary">mdi-folder</v-icon>
-            {{ project.name }}
+          <v-card-title class="d-flex align-center justify-space-between">
+            <div class="d-flex align-center">
+              <v-icon class="mr-2" color="primary">mdi-folder</v-icon>
+              {{ project.name }}
+            </div>
+            <v-btn
+              color="error"
+              icon
+              size="small"
+              variant="text"
+              @click.stop="openDeleteDialog(project)"
+            >
+              <v-icon>mdi-delete</v-icon>
+              <v-tooltip activator="parent" location="top">
+                Deletar projeto
+              </v-tooltip>
+            </v-btn>
           </v-card-title>
           <v-card-subtitle>
             Criado em: {{ formatDate(project.created_at) }}
@@ -183,11 +197,44 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Dialog Confirmar Exclusão de Projeto -->
+    <v-dialog v-model="dialogDelete" max-width="450">
+      <v-card>
+        <v-card-title class="text-error">
+          <v-icon class="mr-2">mdi-alert</v-icon>
+          Confirmar Exclusão
+        </v-card-title>
+        <v-card-text>
+          <p class="mb-2">
+            Tem certeza que deseja deletar o projeto
+            <strong>{{ projectToDelete?.name }}</strong>?
+          </p>
+          <v-alert
+            class="mt-3"
+            color="error"
+            density="compact"
+            icon="mdi-alert-circle"
+            variant="tonal"
+          >
+            <strong>Atenção:</strong> Todos os apps deste projeto também serão
+            deletados. Esta ação não pode ser desfeita.
+          </v-alert>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="closeDeleteDialog">Cancelar</v-btn>
+          <v-btn color="error" :loading="deleting" @click="handleDeleteProject">
+            Deletar Projeto
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
 <script setup lang="ts">
-  import type { User } from '@/interfaces'
+  import type { Project, User } from '@/interfaces'
 
   import { onMounted, ref } from 'vue'
 
@@ -198,12 +245,15 @@
   const authStore = useAuthStore()
 
   const dialogCreate = ref(false)
+  const dialogDelete = ref(false)
   const creating = ref(false)
+  const deleting = ref(false)
   const searching = ref(false)
   const searchQuery = ref('')
   const searchResults = ref<User[]>([])
   const selectedUsers = ref<User[]>([])
   const searchTimeout = ref<ReturnType<typeof setTimeout> | null>(null)
+  const projectToDelete = ref<Project | null>(null)
 
   const newProject = ref({
     name: '',
@@ -284,6 +334,30 @@
       console.error('Erro ao criar projeto:', error_)
     } finally {
       creating.value = false
+    }
+  }
+
+  function openDeleteDialog (project: Project) {
+    projectToDelete.value = project
+    dialogDelete.value = true
+  }
+
+  function closeDeleteDialog () {
+    dialogDelete.value = false
+    projectToDelete.value = null
+  }
+
+  async function handleDeleteProject () {
+    if (!projectToDelete.value?.id) return
+
+    deleting.value = true
+    try {
+      await projectStore.deleteProject(projectToDelete.value.id)
+      closeDeleteDialog()
+    } catch (error_) {
+      console.error('Erro ao deletar projeto:', error_)
+    } finally {
+      deleting.value = false
     }
   }
 </script>
