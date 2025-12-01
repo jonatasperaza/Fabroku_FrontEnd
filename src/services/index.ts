@@ -1,1 +1,5 @@
+export { default as AppsService } from './apps'
 export { default as AuthService } from './auth'
+export { default as GitService } from './git'
+export { default as LogsService } from './logs'
+export { default as ProjectsService } from './projects'

@@ -98,27 +98,50 @@
     </template>
 
     <!-- Dialog Criar App -->
-    <v-dialog v-model="dialogCreate" max-width="500">
+    <v-dialog v-model="dialogCreate" max-width="600">
       <v-card>
         <v-card-title>Novo App</v-card-title>
         <v-card-text>
-          <v-text-field
-            v-model="newApp.name"
-            autofocus
-            class="mb-4"
-            label="Nome do App"
-            required
-            variant="outlined"
-          />
-          <v-text-field
-            v-model="newApp.git"
-            hint="Ex: https://github.com/user/repo.git"
-            label="URL do Repositório Git"
-            required
-            variant="outlined"
-          />
+          <v-tabs v-model="createTab" class="mb-4">
+            <v-tab value="manual">Manual</v-tab>
+            <v-tab value="github">GitHub</v-tab>
+          </v-tabs>
+
+          <v-tabs-window v-model="createTab">
+            <v-tabs-window-item value="manual">
+              <v-text-field
+                v-model="newApp.name"
+                autofocus
+                class="mb-4"
+                label="Nome do App"
+                required
+                variant="outlined"
+              />
+              <v-text-field
+                v-model="newApp.git"
+                hint="Ex: https://github.com/user/repo.git"
+                label="URL do Repositório Git"
+                required
+                variant="outlined"
+              />
+              <v-text-field
+                v-model="newApp.branch"
+                class="mt-4"
+                hint="Deixe vazio para usar a branch padrão"
+                label="Branch"
+                variant="outlined"
+              />
+            </v-tabs-window-item>
+
+            <v-tabs-window-item value="github">
+              <RepoSelector
+                @cancel="dialogCreate = false"
+                @select="handleRepoSelect"
+              />
+            </v-tabs-window-item>
+          </v-tabs-window>
         </v-card-text>
-        <v-card-actions>
+        <v-card-actions v-if="createTab === 'manual'">
           <v-spacer />
           <v-btn variant="text" @click="dialogCreate = false">Cancelar</v-btn>
           <v-btn color="primary" :loading="creating" @click="handleCreateApp">
@@ -131,8 +154,12 @@
 </template>
 
 <script setup lang="ts">
+  import type { GitRepo } from '@/interfaces'
+
   import { computed, onMounted, ref } from 'vue'
   import { useRoute } from 'vue-router'
+
+  import RepoSelector from '@/components/git/RepoSelector.vue'
   import { useAppStore, useProjectStore } from '@/stores'
 
   const route = useRoute()
@@ -144,9 +171,11 @@
   const loading = ref(true)
   const dialogCreate = ref(false)
   const creating = ref(false)
+  const createTab = ref('manual')
   const newApp = ref({
     name: '',
     git: '',
+    branch: '',
   })
 
   // Filtra apps pelo projeto atual
@@ -162,7 +191,9 @@
   })
 
   function formatDate (dateString?: string) {
-    if (!dateString) return '-'
+    if (!dateString) {
+      return '-'
+    }
     return new Date(dateString).toLocaleDateString('pt-BR')
   }
 
@@ -187,18 +218,37 @@
   }
 
   async function handleCreateApp () {
-    if (!newApp.value.name.trim() || !newApp.value.git.trim()) return
+    if (!newApp.value.name.trim() || !newApp.value.git.trim()) {
+      return
+    }
 
     creating.value = true
     try {
       await appStore.createApp({
         name: newApp.value.name,
         git: newApp.value.git,
+        branch: newApp.value.branch || undefined,
         project: projectId,
       })
       dialogCreate.value = false
-      newApp.value.name = ''
-      newApp.value.git = ''
+      newApp.value = { name: '', git: '', branch: '' }
+    } catch (error_) {
+      console.error('Erro ao criar app:', error_)
+    } finally {
+      creating.value = false
+    }
+  }
+
+  async function handleRepoSelect (repo: GitRepo) {
+    creating.value = true
+    try {
+      await appStore.createApp({
+        name: repo.name,
+        git: repo.clone_url,
+        branch: repo.default_branch,
+        project: projectId,
+      })
+      dialogCreate.value = false
     } catch (error_) {
       console.error('Erro ao criar app:', error_)
     } finally {

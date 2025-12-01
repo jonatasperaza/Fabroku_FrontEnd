@@ -1,0 +1,1330 @@
+openapi: 3.0.3
+info:
+  title: Fabroku API
+  version: 1.0.0
+  description: API para gerenciamento do Fabroku, incluindo endpoints e documentação.
+paths:
+  /api/:
+    get:
+      operationId: root_retrieve
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/apps/:
+    get:
+      operationId: apps_retrieve
+      tags:
+      - apps
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/apps/apps/:
+    get:
+      operationId: apps_apps_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: Um número de página dentro do conjunto de resultados paginado.
+        schema:
+          type: integer
+      tags:
+      - apps
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAppList'
+          description: ''
+    post:
+      operationId: apps_apps_create
+      tags:
+      - apps
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/App'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/App'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/App'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/App'
+          description: ''
+  /api/apps/apps/{id}/:
+    get:
+      operationId: apps_apps_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Um valor inteiro único que identifica este App.
+        required: true
+      tags:
+      - apps
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/App'
+          description: ''
+    put:
+      operationId: apps_apps_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Um valor inteiro único que identifica este App.
+        required: true
+      tags:
+      - apps
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/App'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/App'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/App'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/App'
+          description: ''
+    patch:
+      operationId: apps_apps_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Um valor inteiro único que identifica este App.
+        required: true
+      tags:
+      - apps
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedApp'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedApp'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedApp'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/App'
+          description: ''
+    delete:
+      operationId: apps_apps_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Um valor inteiro único que identifica este App.
+        required: true
+      tags:
+      - apps
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/apps/apps/{id}/get_app_status/:
+    get:
+      operationId: apps_apps_get_app_status_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Um valor inteiro único que identifica este App.
+        required: true
+      tags:
+      - apps
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/App'
+          description: ''
+  /api/auth/:
+    get:
+      operationId: auth_retrieve
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/auth/check/:
+    get:
+      operationId: auth_check_retrieve
+      description: |-
+        Verifica se o usuário está autenticado.
+        Retorna os dados do usuário se autenticado, ou erro se não.
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/auth/github/callback/:
+    get:
+      operationId: auth_github_callback_retrieve
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/auth/github/login/:
+    get:
+      operationId: auth_github_login_retrieve
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/auth/logout/:
+    post:
+      operationId: auth_logout_create
+      description: 'Logout: remove os cookies de autenticação e invalida o refresh
+        token.'
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/auth/refresh/:
+    post:
+      operationId: auth_refresh_create
+      description: |-
+        Refresh do token JWT usando o refresh_token do cookie.
+        Gera novos tokens e atualiza os cookies.
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/auth/users/:
+    get:
+      operationId: auth_users_list
+      parameters:
+      - in: query
+        name: id
+        schema:
+          type: integer
+      - in: query
+        name: name
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: Um número de página dentro do conjunto de resultados paginado.
+        schema:
+          type: integer
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUserList'
+          description: ''
+    post:
+      operationId: auth_users_create
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/auth/users/{id}/:
+    get:
+      operationId: auth_users_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Um valor inteiro único que identifica este Usuário.
+        required: true
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRetrieve'
+          description: ''
+    put:
+      operationId: auth_users_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Um valor inteiro único que identifica este Usuário.
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    patch:
+      operationId: auth_users_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Um valor inteiro único que identifica este Usuário.
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUser'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUser'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUser'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    delete:
+      operationId: auth_users_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Um valor inteiro único que identifica este Usuário.
+        required: true
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/auth/users/me/:
+    get:
+      operationId: auth_users_me_retrieve
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/git/repos:
+    get:
+      operationId: git_repos_retrieve
+      tags:
+      - git
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/logs/:
+    get:
+      operationId: logs_list
+      description: ViewSet para visualização de logs de aplicações.
+      parameters:
+      - in: query
+        name: app
+        schema:
+          type: integer
+      - in: query
+        name: category
+        schema:
+          type: string
+          enum:
+          - CONFIG
+          - CREATE
+          - DATABASE
+          - DEPLOY
+          - DOMAIN
+          - GIT
+          - SSL
+          - SYSTEM
+        description: |-
+          * `SYSTEM` - Sistema
+          * `CREATE` - Criação
+          * `DEPLOY` - Deploy
+          * `CONFIG` - Configuração
+          * `GIT` - Git
+          * `DATABASE` - Banco de Dados
+          * `DOMAIN` - Domínio
+          * `SSL` - SSL/TLS
+      - in: query
+        name: level
+        schema:
+          type: string
+          enum:
+          - DEBUG
+          - DOKKU
+          - ERROR
+          - INFO
+          - SUCCESS
+          - WARNING
+        description: |-
+          * `DEBUG` - Debug
+          * `INFO` - Info
+          * `WARNING` - Warning
+          * `ERROR` - Error
+          * `SUCCESS` - Success
+          * `DOKKU` - Dokku Output
+      - name: page
+        required: false
+        in: query
+        description: Um número de página dentro do conjunto de resultados paginado.
+        schema:
+          type: integer
+      - in: query
+        name: progress
+        schema:
+          type: integer
+      - in: query
+        name: task_id
+        schema:
+          type: string
+      tags:
+      - logs
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAppLogList'
+          description: ''
+  /api/logs/{id}/:
+    get:
+      operationId: logs_retrieve
+      description: ViewSet para visualização de logs de aplicações.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Um valor inteiro único que identifica este App Log.
+        required: true
+      tags:
+      - logs
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppLog'
+          description: ''
+  /api/logs/stream/{task_id}/:
+    get:
+      operationId: logs_stream_retrieve
+      description: |-
+        Polling de logs em tempo real.
+        Query params: ?after={last_id} para pegar logs novos.
+      parameters:
+      - in: path
+        name: task_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - logs
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppLog'
+          description: ''
+  /api/projects/:
+    get:
+      operationId: projects_retrieve
+      tags:
+      - projects
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/projects/projects/:
+    get:
+      operationId: projects_projects_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: Um número de página dentro do conjunto de resultados paginado.
+        schema:
+          type: integer
+      tags:
+      - projects
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProjectList'
+          description: ''
+    post:
+      operationId: projects_projects_create
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Project'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Project'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Project'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+  /api/projects/projects/{id}/:
+    get:
+      operationId: projects_projects_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: Um string UUID que identifica este Project.
+        required: true
+      tags:
+      - projects
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+    put:
+      operationId: projects_projects_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: Um string UUID que identifica este Project.
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Project'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Project'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Project'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+    patch:
+      operationId: projects_projects_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: Um string UUID que identifica este Project.
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProject'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProject'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProject'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+    delete:
+      operationId: projects_projects_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: Um string UUID que identifica este Project.
+        required: true
+      tags:
+      - projects
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/schema/:
+    get:
+      operationId: schema_retrieve
+      description: |-
+        OpenApi3 schema for this API. Format can be selected via content negotiation.
+
+        - YAML: application/vnd.oai.openapi
+        - JSON: application/vnd.oai.openapi+json
+      parameters:
+      - in: query
+        name: format
+        schema:
+          type: string
+          enum:
+          - json
+          - yaml
+      - in: query
+        name: lang
+        schema:
+          type: string
+          enum:
+          - af
+          - ar
+          - ar-dz
+          - ast
+          - az
+          - be
+          - bg
+          - bn
+          - br
+          - bs
+          - ca
+          - ckb
+          - cs
+          - cy
+          - da
+          - de
+          - dsb
+          - el
+          - en
+          - en-au
+          - en-gb
+          - eo
+          - es
+          - es-ar
+          - es-co
+          - es-mx
+          - es-ni
+          - es-ve
+          - et
+          - eu
+          - fa
+          - fi
+          - fr
+          - fy
+          - ga
+          - gd
+          - gl
+          - he
+          - hi
+          - hr
+          - hsb
+          - hu
+          - hy
+          - ia
+          - id
+          - ig
+          - io
+          - is
+          - it
+          - ja
+          - ka
+          - kab
+          - kk
+          - km
+          - kn
+          - ko
+          - ky
+          - lb
+          - lt
+          - lv
+          - mk
+          - ml
+          - mn
+          - mr
+          - ms
+          - my
+          - nb
+          - ne
+          - nl
+          - nn
+          - os
+          - pa
+          - pl
+          - pt
+          - pt-br
+          - ro
+          - ru
+          - sk
+          - sl
+          - sq
+          - sr
+          - sr-latn
+          - sv
+          - sw
+          - ta
+          - te
+          - tg
+          - th
+          - tk
+          - tr
+          - tt
+          - udm
+          - ug
+          - uk
+          - ur
+          - uz
+          - vi
+          - zh-hans
+          - zh-hant
+      tags:
+      - schema
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/vnd.oai.openapi:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/yaml:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/vnd.oai.openapi+json:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/token/refresh/:
+    post:
+      operationId: token_refresh_create
+      description: View para refresh de tokens JWT.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+components:
+  schemas:
+    App:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        git:
+          type: string
+          format: uri
+          maxLength: 200
+        branch:
+          type: string
+          maxLength: 255
+        project:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        domain:
+          type: string
+          readOnly: true
+          nullable: true
+        port:
+          type: integer
+          readOnly: true
+          nullable: true
+        variables: {}
+        task_id:
+          type: string
+          readOnly: true
+          nullable: true
+        name_dokku:
+          type: string
+          readOnly: true
+          nullable: true
+      required:
+      - created_at
+      - domain
+      - git
+      - id
+      - name
+      - name_dokku
+      - port
+      - project
+      - status
+      - task_id
+      - updated_at
+    AppLog:
+      type: object
+      description: Serializer para AppLog.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        app:
+          type: integer
+        task_id:
+          type: string
+          nullable: true
+          maxLength: 255
+        message:
+          type: string
+          description: Mensagem do log
+        level:
+          $ref: '#/components/schemas/LevelEnum'
+        level_display:
+          type: string
+          readOnly: true
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
+        category_display:
+          type: string
+          readOnly: true
+        metadata: {}
+        progress:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - app
+      - category_display
+      - created_at
+      - id
+      - level_display
+      - message
+    CategoryEnum:
+      enum:
+      - SYSTEM
+      - CREATE
+      - DEPLOY
+      - CONFIG
+      - GIT
+      - DATABASE
+      - DOMAIN
+      - SSL
+      type: string
+      description: |-
+        * `SYSTEM` - Sistema
+        * `CREATE` - Criação
+        * `DEPLOY` - Deploy
+        * `CONFIG` - Configuração
+        * `GIT` - Git
+        * `DATABASE` - Banco de Dados
+        * `DOMAIN` - Domínio
+        * `SSL` - SSL/TLS
+    LevelEnum:
+      enum:
+      - DEBUG
+      - INFO
+      - WARNING
+      - ERROR
+      - SUCCESS
+      - DOKKU
+      type: string
+      description: |-
+        * `DEBUG` - Debug
+        * `INFO` - Info
+        * `WARNING` - Warning
+        * `ERROR` - Error
+        * `SUCCESS` - Success
+        * `DOKKU` - Dokku Output
+    PaginatedAppList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/App'
+    PaginatedAppLogList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppLog'
+    PaginatedProjectList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Project'
+    PaginatedUserList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+    PatchedApp:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        git:
+          type: string
+          format: uri
+          maxLength: 200
+        branch:
+          type: string
+          maxLength: 255
+        project:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        domain:
+          type: string
+          readOnly: true
+          nullable: true
+        port:
+          type: integer
+          readOnly: true
+          nullable: true
+        variables: {}
+        task_id:
+          type: string
+          readOnly: true
+          nullable: true
+        name_dokku:
+          type: string
+          readOnly: true
+          nullable: true
+    PatchedProject:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        users:
+          type: array
+          items:
+            type: integer
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedUser:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        email:
+          type: string
+          format: email
+          title: E-mail address
+          maxLength: 254
+        name:
+          type: string
+          nullable: true
+          maxLength: 255
+        avatar_url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 500
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        users:
+          type: array
+          items:
+            type: integer
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - updated_at
+      - users
+    StatusEnum:
+      enum:
+      - starting
+      - running
+      - stopped
+      - error
+      type: string
+      description: |-
+        * `starting` - Starting
+        * `running` - Running
+        * `stopped` - Stopped
+        * `error` - Error
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+      required:
+      - access
+      - refresh
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        email:
+          type: string
+          format: email
+          title: E-mail address
+          maxLength: 254
+        name:
+          type: string
+          nullable: true
+          maxLength: 255
+        avatar_url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 500
+      required:
+      - email
+      - id
+    UserRetrieve:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        avatar_url:
+          type: string
+          format: uri
+          readOnly: true
+      required:
+      - avatar_url
+      - email
+      - id
+      - name
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

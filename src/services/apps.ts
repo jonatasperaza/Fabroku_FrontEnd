@@ -1,4 +1,5 @@
 import type { App, Response } from '@/interfaces'
+
 import apiClient from '@/plugins/axios'
 
 class AppsService {
@@ -12,18 +13,27 @@ class AppsService {
     return response.data
   }
 
-  async createApp (data: any): Promise<App> {
+  async createApp (data: Partial<App>): Promise<App> {
     const response = await apiClient.post('/apps/apps/', data)
     return response.data
   }
 
-  async updateApp (id: string, data: any): Promise<App> {
+  async updateApp (id: string, data: Partial<App>): Promise<App> {
     const response = await apiClient.put(`/apps/apps/${id}/`, data)
     return response.data
   }
 
-  async deleteApp (id: string) {
-    const response = await apiClient.delete(`/apps/apps/${id}/`)
+  async patchApp (id: string, data: Partial<App>): Promise<App> {
+    const response = await apiClient.patch(`/apps/apps/${id}/`, data)
+    return response.data
+  }
+
+  async deleteApp (id: string): Promise<void> {
+    await apiClient.delete(`/apps/apps/${id}/`)
+  }
+
+  async getAppStatus (id: string): Promise<App> {
+    const response = await apiClient.get(`/apps/apps/${id}/get_app_status/`)
     return response.data
   }
 }

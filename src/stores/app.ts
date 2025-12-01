@@ -72,11 +72,11 @@ export const useAppStore = defineStore('app', () => {
     error.value = null
     try {
       const updatedApp = await AppsService.updateApp(appId, data)
-      const index = apps.value.findIndex(a => a.id === appId)
+      const index = apps.value.findIndex(a => String(a.id) === appId)
       if (index !== -1) {
         apps.value[index] = updatedApp
       }
-      if (currentApp.value?.id === appId) {
+      if (String(currentApp.value?.id) === appId) {
         currentApp.value = updatedApp
       }
       return updatedApp
@@ -95,8 +95,8 @@ export const useAppStore = defineStore('app', () => {
     error.value = null
     try {
       await AppsService.deleteApp(appId)
-      apps.value = apps.value.filter(a => a.id !== appId)
-      if (currentApp.value?.id === appId) {
+      apps.value = apps.value.filter(a => String(a.id) !== appId)
+      if (String(currentApp.value?.id) === appId) {
         currentApp.value = null
       }
     } catch (error_) {
@@ -105,6 +105,25 @@ export const useAppStore = defineStore('app', () => {
       throw error_
     } finally {
       loading.value = false
+    }
+  }
+
+  // Buscar status do app
+  const fetchAppStatus = async (appId: string) => {
+    try {
+      const app = await AppsService.getAppStatus(appId)
+      // Atualiza o app na lista e o currentApp
+      const index = apps.value.findIndex(a => String(a.id) === appId)
+      if (index !== -1) {
+        apps.value[index] = app
+      }
+      if (String(currentApp.value?.id) === appId) {
+        currentApp.value = app
+      }
+      return app
+    } catch (error_) {
+      console.error('Erro ao buscar status:', error_)
+      throw error_
     }
   }
 
@@ -126,6 +145,7 @@ export const useAppStore = defineStore('app', () => {
     error,
     fetchApps,
     fetchApp,
+    fetchAppStatus,
     createApp,
     updateApp,
     deleteApp,

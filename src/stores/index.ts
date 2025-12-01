@@ -1,3 +1,5 @@
 export { useAppStore } from './app'
 export { useAuthStore } from './auth'
+export { useGitStore } from './git'
+export { useLogStore } from './log'
 export { useProjectStore } from './project'
