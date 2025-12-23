@@ -32,7 +32,6 @@ export default createVuetify({
         colors: {
           'primary': '#542ab4ff',
           'primary-hover': '#0f0fb8',
-          'background': '#101022',
           'surface': '#1a1a2e',
           'text-muted': '#9d9db9',
           'text-primary': '#ffffff',

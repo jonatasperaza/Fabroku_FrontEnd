@@ -13,12 +13,27 @@ meta:
   const error = ref<string | null>(null)
   const loading = ref(true)
 
+  function getDefaultErrorMessage (errorCode: string): string {
+    const errorMessages: Record<string, string> = {
+      auth_failed: 'Falha ao obter token de acesso do GitHub.',
+      user_info_failed: 'Falha ao obter informações do usuário do GitHub.',
+      email_failed: 'Falha ao obter email do usuário do GitHub.',
+      invalid_email: 'O email do usuário não é válido.',
+      unexpected_error: 'Erro inesperado durante a autenticação.',
+    }
+    return errorMessages[errorCode] || 'Erro desconhecido na autenticação.'
+  }
+
   onMounted(async () => {
     const urlParams = new URLSearchParams(window.location.search)
     const errorParam = urlParams.get('error')
+    const messageParam = urlParams.get('message')
 
     if (errorParam) {
-      error.value = decodeURIComponent(errorParam)
+      // Usar a mensagem do backend se disponível, senão usar mensagem padrão
+      error.value = messageParam
+        ? decodeURIComponent(messageParam)
+        : getDefaultErrorMessage(errorParam)
       loading.value = false
       return
     }

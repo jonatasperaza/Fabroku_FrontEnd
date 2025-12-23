@@ -9,12 +9,6 @@ meta:
       <v-container class="pa-0" fluid>
         <v-row no-gutters>
           <v-col class="d-flex flex-column" cols="12">
-            <!-- Header -->
-            <v-sheet class="text-center pt-8" color="transparent">
-              <div class="d-flex align-center justify-center gap-2">
-                <span class="text-h5 font-weight-bold text-white">Fabroku</span>
-              </div>
-            </v-sheet>
 
             <!-- Main Content -->
             <v-container
@@ -23,9 +17,14 @@ meta:
               <v-sheet
                 class="text-center px-4"
                 color="transparent"
-                max-width="580"
+                max-width="800"
                 width="100%"
               >
+                <!-- Icon Cloud -->
+                <div class="icon-cloud-wrapper mb-6">
+                  <IconCloudDemo />
+                </div>
+
                 <h1 class="text-h3 font-weight-bold text-white mb-4">
                   Bem-vindo à Fabroku
                 </h1>
@@ -42,6 +41,7 @@ meta:
                   prepend-icon="mdi-code-tags"
                   rounded="lg"
                   size="x-large"
+                  style="max-width: 400px; margin: 0 auto"
                   @click="login"
                 >
                   Entrar com GitHub
@@ -74,6 +74,7 @@ meta:
 </template>
 
 <script setup lang="ts">
+  import IconCloudDemo from '@/components/demo/IconCloudDemo.vue'
   import { useAuthStore } from '@/stores'
   const authStore = useAuthStore()
 
@@ -83,22 +84,23 @@ meta:
 </script>
 
 <style scoped>
-.v-application {
-  background-color: #101022 !important;
-}
-
-.bg-dark {
-  background-color: #101022 !important;
-}
 
 .main-area {
   min-height: calc(100vh - 256px);
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 1;
 }
 
 .gap-2 {
   gap: 8px;
+}
+
+/* Icon Cloud Wrapper */
+.icon-cloud-wrapper {
+  max-width: 100vw;
+  margin: 0 auto;
 }
 
 /* Hover effect nos links do footer */

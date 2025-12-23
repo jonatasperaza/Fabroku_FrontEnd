@@ -11,16 +11,12 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    '[id]': typeof import('./components/projects/[id]/index.vue')['default']
     Apps: typeof import('./components/projects/apps/index.vue')['default']
-    Button: typeof import('./components/Button.vue')['default']
     Components: typeof import('./components/index.vue')['default']
     DashboardComponent: typeof import('./components/dashboard/DashboardComponent.vue')['default']
-    Documentation: typeof import('./components/documentation/DocumentationComponent.vue')['default']
     DocumentationComponent: typeof import('./components/documentation/DocumentationComponent.vue')['default']
-    HelloWorld: typeof import('./components/HelloWorld.vue')['default']
-    Home: typeof import('./components/home/HomeComponent.vue')['default']
-    HomeComponent: typeof import('./components/dashboard/DashboardComponent.vue')['default']
+    IconCloudDemo: typeof import('./components/demo/IconCloudDemo.vue')['default']
+    InteractiveIconCloud: typeof import('./components/ui/InteractiveIconCloud.vue')['default']
     Login: typeof import('./components/login/index.vue')['default']
     LogViewer: typeof import('./components/logs/LogViewer.vue')['default']
     ProjectsComponent: typeof import('./components/projects/ProjectsComponent.vue')['default']

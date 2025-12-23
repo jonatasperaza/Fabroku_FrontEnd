@@ -1,55 +1,70 @@
 <template>
   <v-app>
-    <v-navigation-drawer permanent>
-      <v-sheet class="d-flex align-center pr-5" elevation="0">
-        <v-card
-          class="d-flex align-center px-4 py-2 mt-3"
-          elevation="0"
-          rounded="lg"
-        >
-          <v-avatar
-            :image="authStore.user?.avatar_url"
-            :name="authStore.user?.name"
-          />
-          <div class="ml-2">
-            <div class="text-subtitle-2 font-weight-medium text-capitalize">
-              {{ authStore.user?.name || "Usuário" }}
+    <v-navigation-drawer class="sidebar-container" permanent>
+      <div>
+        <v-sheet class="d-flex align-center pr-5" elevation="0">
+          <v-card
+            class="d-flex align-center px-4 py-2 mt-3"
+            elevation="0"
+            rounded="lg"
+          >
+            <v-avatar
+              :image="authStore.user?.avatar_url"
+              :name="authStore.user?.name"
+            />
+            <div class="ml-2">
+              <div class="text-subtitle-2 font-weight-medium text-capitalize">
+                {{ authStore.user?.name || "Usuário" }}
+              </div>
             </div>
-          </div>
-        </v-card>
-      </v-sheet>
+          </v-card>
+        </v-sheet>
+        <v-list class="d-flex flex-column align-center px-2">
+          <v-list-item
+            class="menu-item"
+            link
+            prepend-icon="mdi-view-dashboard"
+            rounded="lg"
+            title="Dashboard"
+            to="/dashboard"
+          />
+          <v-list-item
+            class="menu-item"
+            link
+            prepend-icon="mdi-folder"
+            rounded="lg"
+            title="Projetos"
+            to="/projects"
+          />
+          <v-list-item
+            class="menu-item"
+            link
+            prepend-icon="mdi-cog-outline"
+            rounded="lg"
+            title="Configurações"
+            to="/settings"
+          />
+          <v-list-item
+            class="menu-item"
+            link
+            prepend-icon="mdi-book-open-variant-outline"
+            rounded="lg"
+            title="Documentação"
+            to="/documentation"
+          />
+        </v-list>
+      </div>
+
+      <v-spacer />
+
       <v-list class="d-flex flex-column align-center px-2">
         <v-list-item
-          class="menu-item"
+          class="menu-item logout-button"
           link
-          prepend-icon="mdi-view-dashboard"
+          prepend-icon="mdi-logout"
           rounded="lg"
-          title="Dashboard"
-          to="/dashboard"
-        />
-        <v-list-item
-          class="menu-item"
-          link
-          prepend-icon="mdi-folder"
-          rounded="lg"
-          title="Projetos"
-          to="/projects"
-        />
-        <v-list-item
-          class="menu-item"
-          link
-          prepend-icon="mdi-cog-outline"
-          rounded="lg"
-          title="Configurações"
-          to="/settings"
-        />
-        <v-list-item
-          class="menu-item"
-          link
-          prepend-icon="mdi-book-open-variant-outline"
-          rounded="lg"
-          title="Documentação"
-          to="/documentation"
+          title="Sair"
+          @click="handleLogout"
         />
       </v-list>
     </v-navigation-drawer>
@@ -69,9 +84,25 @@
   onMounted(() => {
     authStore.checkAuth()
   })
+
+  async function handleLogout () {
+    await authStore.logout()
+  }
 </script>
 
 <style scoped>
+.sidebar-container {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+}
+
+.sidebar-container :deep(.v-navigation-drawer__content) {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .menu-item {
   width: 100%;
   margin-bottom: 12px;
@@ -81,5 +112,14 @@
 /* Reduz a margem do ícone */
 .menu-item :deep(.v-list-item__spacer) {
   width: 16px !important;
+}
+
+/* Estilo do botão de logout */
+.logout-button:hover {
+  background-color: rgba(244, 67, 54, 0.1);
+}
+
+.logout-button :deep(.v-list-item-title) {
+  color: rgb(244, 67, 54);
 }
 </style>
