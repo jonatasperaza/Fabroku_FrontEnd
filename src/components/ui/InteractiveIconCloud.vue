@@ -1,8 +1,9 @@
 <script setup lang="ts">
+  import type { FunctionalComponent } from 'vue'
   import IconCloud from 'vue-icon-cloud'
 
   defineProps<{
-    icons: string[]
+    icons: FunctionalComponent[]
   }>()
 
 </script>

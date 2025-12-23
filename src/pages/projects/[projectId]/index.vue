@@ -313,7 +313,7 @@ PORT=3000"
   })
 
   // Estado para variáveis de ambiente
-  const newAppEnvVars = ref<Array<{ key: string; value: string }>>([])
+  const newAppEnvVars = ref<Array<{ key: string, value: string }>>([])
   const dialogAddEnvVar = ref(false)
   const tempEnvVar = ref({ key: '', value: '' })
   const dialogImportEnv = ref(false)
@@ -428,7 +428,10 @@ PORT=3000"
             newAppEnvVars.value.push({ key, value })
           } else {
             // Atualiza existente
-            newAppEnvVars.value[existingIndex].value = value
+            const existing = newAppEnvVars.value[existingIndex]
+            if (existing) {
+              existing.value = value
+            }
           }
           importedCount++
         }
