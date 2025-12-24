@@ -112,8 +112,11 @@
             color="primary"
             prepend-icon="mdi-account-check"
           >
-            <v-avatar size="24" start>
+            <v-avatar v-if="authStore.user.avatar_url" size="24" start>
               <v-img :src="authStore.user.avatar_url" />
+            </v-avatar>
+            <v-avatar v-else color="grey" size="24" start>
+              <v-icon size="small">mdi-account</v-icon>
             </v-avatar>
             {{ authStore.user.login }} (você)
           </v-chip>
@@ -127,35 +130,38 @@
             closable-chips
             hide-no-data
             hide-selected
-            item-title="username"
+            item-title="name"
             item-value="id"
             :items="searchResults"
-            label="Adicionar membros (buscar por username do GitHub)"
+            label="Adicionar membros (buscar por nome do GitHub)"
             :loading="searching"
             multiple
-            placeholder="Digite o username do GitHub..."
+            placeholder="Digite o nome do usuário..."
             return-object
             variant="outlined"
             @update:search="handleSearch"
           >
             <template #chip="{ item, props: chipProps }">
               <v-chip v-bind="chipProps">
-                <v-avatar size="24" start>
+                <v-avatar v-if="item.raw.avatar_url" size="24" start>
                   <v-img :src="item.raw.avatar_url" />
                 </v-avatar>
-                {{ item.raw.username }}
+                {{ item.raw.name }}
               </v-chip>
             </template>
             <template #item="{ item, props: itemProps }">
               <v-list-item v-bind="itemProps">
                 <template #prepend>
-                  <v-avatar size="32">
+                  <v-avatar v-if="item.raw.avatar_url" size="32">
                     <v-img :src="item.raw.avatar_url" />
                   </v-avatar>
+                  <v-avatar v-else color="grey" size="32">
+                    <v-icon>mdi-account</v-icon>
+                  </v-avatar>
                 </template>
-                <v-list-item-title>{{ item.raw.username }}</v-list-item-title>
-                <v-list-item-subtitle v-if="item.raw.name">
-                  {{ item.raw.name }}
+                <v-list-item-title>{{ item.raw.name }}</v-list-item-title>
+                <v-list-item-subtitle v-if="item.raw.email">
+                  {{ item.raw.email }}
                 </v-list-item-subtitle>
               </v-list-item>
             </template>
