@@ -19,6 +19,8 @@ declare module 'vue-router/auto-routes' {
    */
   export interface RouteNamedMap {
     '/': RouteRecordInfo<'/', '/', Record<never, never>, Record<never, never>>,
+    '/admin/': RouteRecordInfo<'/admin/', '/admin', Record<never, never>, Record<never, never>>,
+    '/admin/projects/[projectId]': RouteRecordInfo<'/admin/projects/[projectId]', '/admin/projects/:projectId', { projectId: ParamValue<true> }, { projectId: ParamValue<false> }>,
     '/callback/': RouteRecordInfo<'/callback/', '/callback', Record<never, never>, Record<never, never>>,
     '/dashboard/': RouteRecordInfo<'/dashboard/', '/dashboard', Record<never, never>, Record<never, never>>,
     '/documentation/': RouteRecordInfo<'/documentation/', '/documentation', Record<never, never>, Record<never, never>>,
@@ -43,6 +45,14 @@ declare module 'vue-router/auto-routes' {
   export interface _RouteFileInfoMap {
     'src/pages/index.vue': {
       routes: '/'
+      views: never
+    }
+    'src/pages/admin/index.vue': {
+      routes: '/admin/'
+      views: never
+    }
+    'src/pages/admin/projects/[projectId].vue': {
+      routes: '/admin/projects/[projectId]'
       views: never
     }
     'src/pages/callback/index.vue': {

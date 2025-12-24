@@ -118,7 +118,7 @@
             <v-avatar v-else color="grey" size="24" start>
               <v-icon size="small">mdi-account</v-icon>
             </v-avatar>
-            {{ authStore.user.login }} (você)
+            {{ authStore.user.name || authStore.user.username || authStore.user.email }} (você)
           </v-chip>
 
           <!-- Busca de usuários -->
