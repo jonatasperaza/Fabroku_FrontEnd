@@ -30,9 +30,10 @@
           @click="startStream"
         >
           <v-icon color="grey-lighten-1" size="16">mdi-play</v-icon>
-          <v-tooltip activator="parent" location="top"
-            >Acompanhar ao vivo</v-tooltip
-          >
+          <v-tooltip
+            activator="parent"
+            location="top"
+          >Acompanhar ao vivo</v-tooltip>
         </v-btn>
         <v-btn
           v-if="streaming"
@@ -78,8 +79,7 @@
           v-if="line.prefix"
           class="log-line__prefix"
           :class="line.prefixCls"
-          >{{ line.prefix }}</span
-        >
+        >{{ line.prefix }}</span>
         <span class="log-line__text">{{ line.text }}</span>
       </div>
 
@@ -97,182 +97,186 @@
 </template>
 
 <script setup lang="ts">
-import type { AppLog } from "@/interfaces";
-import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
+  import type { AppLog } from '@/interfaces'
+  import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 
-interface Props {
-  logs: AppLog[];
-  loading?: boolean;
-  title?: string;
-  taskId?: string;
-  autoScroll?: boolean;
-}
+  interface Props {
+    logs: AppLog[]
+    loading?: boolean
+    title?: string
+    taskId?: string
+    autoScroll?: boolean
+  }
 
-interface DisplayLine {
-  time: string;
-  prefix: string;
-  prefixCls: string;
-  text: string;
-  cls: string;
-}
+  interface DisplayLine {
+    time: string
+    prefix: string
+    prefixCls: string
+    text: string
+    cls: string
+  }
 
-const props = withDefaults(defineProps<Props>(), {
-  loading: false,
-  title: "Deploy Logs",
-  autoScroll: true,
-});
+  const props = withDefaults(defineProps<Props>(), {
+    loading: false,
+    title: 'Deploy Logs',
+    autoScroll: true,
+  })
 
-const emit = defineEmits<{
-  "stream-logs": [taskId: string, afterId?: number];
-  "stop-stream": [];
-}>();
+  const emit = defineEmits<{
+    'stream-logs': [taskId: string, afterId?: number]
+    'stop-stream': []
+  }>()
 
-const terminalBody = ref<HTMLElement | null>(null);
-const streaming = ref(false);
-const streamInterval = ref<number | null>(null);
-const expanded = ref(false);
+  const terminalBody = ref<HTMLElement | null>(null)
+  const streaming = ref(false)
+  const streamInterval = ref<number | null>(null)
+  const expanded = ref(false)
 
-/**
- * Transforma os logs brutos em linhas de terminal limpas.
- * Filtra ruído e mantém só o que importa.
- */
-const displayLines = computed<DisplayLine[]>(() => {
-  const lines: DisplayLine[] = [];
+  /**
+   * Transforma os logs brutos em linhas de terminal limpas.
+   * Filtra ruído e mantém só o que importa.
+   */
+  const displayLines = computed<DisplayLine[]>(() => {
+    const lines: DisplayLine[] = []
 
-  for (const log of props.logs) {
-    // Pula logs DEBUG — são muito verbosos
-    if (log.level === "DEBUG") continue;
+    for (const log of props.logs) {
+      // Pula logs DEBUG — são muito verbosos
+      if (log.level === 'DEBUG') continue
 
-    const time = formatTime(log.created_at);
-    const message = cleanMessage(log.message);
+      const time = formatTime(log.created_at)
+      const message = cleanMessage(log.message)
 
-    if (!message.trim()) continue;
+      if (!message.trim()) continue
 
-    // Logs DOKKU: quebra em múltiplas linhas (output do build)
-    if (log.level === "DOKKU") {
-      const sublines = message
-        .split(/\n|(?=----->)|(?======>)/)
-        .filter(Boolean);
-      for (const sub of sublines) {
-        const trimmed = sub.trim();
-        if (!trimmed) continue;
+      // Logs DOKKU: quebra em múltiplas linhas (output do build)
+      if (log.level === 'DOKKU') {
+        const sublines = message
+          .split(/\n|(?=----->)|(?======>)/)
+          .filter(Boolean)
+        for (const sub of sublines) {
+          const trimmed = sub.trim()
+          if (!trimmed) continue
 
-        if (trimmed.startsWith("----->") || trimmed.startsWith("=====>")) {
-          lines.push({
-            time: "",
-            prefix: "▸",
-            prefixCls: "log-line__prefix--step",
-            text: trimmed.replace(/^[-=]+>\s*/, ""),
-            cls: "log-line--step",
-          });
-        } else {
-          lines.push({
-            time: "",
-            prefix: "",
-            prefixCls: "",
-            text: trimmed,
-            cls: "log-line--dokku",
-          });
+          if (trimmed.startsWith('----->') || trimmed.startsWith('=====>')) {
+            lines.push({
+              time: '',
+              prefix: '▸',
+              prefixCls: 'log-line__prefix--step',
+              text: trimmed.replace(/^[-=]+>\s*/, ''),
+              cls: 'log-line--step',
+            })
+          } else {
+            lines.push({
+              time: '',
+              prefix: '',
+              prefixCls: '',
+              text: trimmed,
+              cls: 'log-line--dokku',
+            })
+          }
         }
+        continue
       }
-      continue;
+
+      // Outros logs: uma linha com prefixo de nível
+      const { prefix, prefixCls, cls } = getLevelStyle(log.level)
+
+      lines.push({
+        time,
+        prefix,
+        prefixCls,
+        text: message,
+        cls,
+      })
     }
 
-    // Outros logs: uma linha com prefixo de nível
-    const { prefix, prefixCls, cls } = getLevelStyle(log.level);
+    return lines
+  })
 
-    lines.push({
-      time,
-      prefix,
-      prefixCls,
-      text: message,
-      cls,
-    });
+  function getLevelStyle (level: string) {
+    switch (level) {
+      case 'ERROR': {
+        return {
+          prefix: '✗',
+          prefixCls: 'log-line__prefix--error',
+          cls: 'log-line--error',
+        }
+      }
+      case 'WARNING': {
+        return {
+          prefix: '⚠',
+          prefixCls: 'log-line__prefix--warn',
+          cls: 'log-line--warn',
+        }
+      }
+      case 'SUCCESS': {
+        return {
+          prefix: '✓',
+          prefixCls: 'log-line__prefix--success',
+          cls: 'log-line--success',
+        }
+      }
+      case 'INFO':
+      default: {
+        return { prefix: '○', prefixCls: 'log-line__prefix--info', cls: '' }
+      }
+    }
   }
 
-  return lines;
-});
-
-function getLevelStyle(level: string) {
-  switch (level) {
-    case "ERROR":
-      return {
-        prefix: "✗",
-        prefixCls: "log-line__prefix--error",
-        cls: "log-line--error",
-      };
-    case "WARNING":
-      return {
-        prefix: "⚠",
-        prefixCls: "log-line__prefix--warn",
-        cls: "log-line--warn",
-      };
-    case "SUCCESS":
-      return {
-        prefix: "✓",
-        prefixCls: "log-line__prefix--success",
-        cls: "log-line--success",
-      };
-    case "INFO":
-    default:
-      return { prefix: "○", prefixCls: "log-line__prefix--info", cls: "" };
+  function formatTime (timestamp?: string): string {
+    if (!timestamp) return ''
+    return new Date(timestamp).toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
   }
-}
 
-function formatTime(timestamp?: string): string {
-  if (!timestamp) return "";
-  return new Date(timestamp).toLocaleTimeString("pt-BR", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-}
-
-function cleanMessage(msg: string): string {
-  return msg
-    .replace(/\[1G/g, "") // ANSI control chars
-    .replace(/\x1B\[[0-9;]*m/g, "") // ANSI color codes
-    .trim();
-}
-
-function scrollToBottom() {
-  if (terminalBody.value) {
-    terminalBody.value.scrollTop = terminalBody.value.scrollHeight;
+  function cleanMessage (msg: string): string {
+    return msg
+      .replace(/\[1G/g, '') // ANSI control chars
+      .replace(/\u001B\[[0-9;]*m/g, '') // ANSI color codes
+      .trim()
   }
-}
 
-function getLastLogId(): number | undefined {
-  return props.logs.length > 0
-    ? props.logs[props.logs.length - 1]?.id
-    : undefined;
-}
-
-function startStream() {
-  if (!props.taskId) return;
-  streaming.value = true;
-  emit("stream-logs", props.taskId, getLastLogId());
-  streamInterval.value = window.setInterval(() => {
-    emit("stream-logs", props.taskId!, getLastLogId());
-  }, 2000);
-}
-
-function stopStream() {
-  streaming.value = false;
-  if (streamInterval.value) {
-    clearInterval(streamInterval.value);
-    streamInterval.value = null;
+  function scrollToBottom () {
+    if (terminalBody.value) {
+      terminalBody.value.scrollTop = terminalBody.value.scrollHeight
+    }
   }
-  emit("stop-stream");
-}
 
-watch(
-  () => props.logs.length,
-  () => {
-    if (props.autoScroll) nextTick(scrollToBottom);
-  },
-);
+  function getLastLogId (): number | undefined {
+    return props.logs.length > 0
+      ? props.logs.at(-1)?.id
+      : undefined
+  }
 
-onBeforeUnmount(() => stopStream());
+  function startStream () {
+    if (!props.taskId) return
+    streaming.value = true
+    emit('stream-logs', props.taskId, getLastLogId())
+    streamInterval.value = window.setInterval(() => {
+      emit('stream-logs', props.taskId!, getLastLogId())
+    }, 2000)
+  }
+
+  function stopStream () {
+    streaming.value = false
+    if (streamInterval.value) {
+      clearInterval(streamInterval.value)
+      streamInterval.value = null
+    }
+    emit('stop-stream')
+  }
+
+  watch(
+    () => props.logs.length,
+    () => {
+      if (props.autoScroll) nextTick(scrollToBottom)
+    },
+  )
+
+  onBeforeUnmount(() => stopStream())
 </script>
 
 <style scoped lang="scss">

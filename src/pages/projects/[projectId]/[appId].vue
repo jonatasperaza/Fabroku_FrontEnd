@@ -50,8 +50,8 @@
           <v-card
             v-if="
               appStore.currentApp.task_id &&
-              (appStore.currentApp.status === 'STARTING' ||
-                appStore.currentApp.status === 'DELETING')
+                (appStore.currentApp.status === 'STARTING' ||
+                  appStore.currentApp.status === 'DELETING')
             "
             class="mb-4"
             :color="
@@ -160,309 +160,309 @@
 </template>
 
 <script setup lang="ts">
-import type { Service } from "@/interfaces";
+  import type { Service } from '@/interfaces'
 
-import { onMounted, onUnmounted, ref, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
+  import { onMounted, onUnmounted, ref, watch } from 'vue'
+  import { useRoute, useRouter } from 'vue-router'
 
-import AppActionsCard from "@/components/projects/AppActionsCard.vue";
-import AppConsoleCard from "@/components/projects/AppConsoleCard.vue";
-import AppDatabaseCard from "@/components/projects/AppDatabaseCard.vue";
-import AppDetailsCard from "@/components/projects/AppDetailsCard.vue";
-import AppEnvVarsCard from "@/components/projects/AppEnvVarsCard.vue";
-import AppLogsCard from "@/components/projects/AppLogsCard.vue";
-import AppPreviewCard from "@/components/projects/AppPreviewCard.vue";
-import AppsService from "@/services/apps";
-import ServicesService from "@/services/services";
-import { useAppStore, useLogStore } from "@/stores";
-import { formatStatus, getStatusColor, getStatusIcon } from "@/utils/status";
+  import AppActionsCard from '@/components/projects/AppActionsCard.vue'
+  import AppConsoleCard from '@/components/projects/AppConsoleCard.vue'
+  import AppDatabaseCard from '@/components/projects/AppDatabaseCard.vue'
+  import AppDetailsCard from '@/components/projects/AppDetailsCard.vue'
+  import AppEnvVarsCard from '@/components/projects/AppEnvVarsCard.vue'
+  import AppLogsCard from '@/components/projects/AppLogsCard.vue'
+  import AppPreviewCard from '@/components/projects/AppPreviewCard.vue'
+  import AppsService from '@/services/apps'
+  import ServicesService from '@/services/services'
+  import { useAppStore, useLogStore } from '@/stores'
+  import { formatStatus, getStatusColor, getStatusIcon } from '@/utils/status'
 
-const route = useRoute();
-const router = useRouter();
-const projectId = (route.params as { projectId: string }).projectId || "";
-const appId = (route.params as { appId: string }).appId || "";
+  const route = useRoute()
+  const router = useRouter()
+  const projectId = (route.params as { projectId: string }).projectId || ''
+  const appId = (route.params as { appId: string }).appId || ''
 
-const appStore = useAppStore();
-const logStore = useLogStore();
-const loading = ref(true);
-const refreshing = ref(false);
-const savingEnvVar = ref(false);
-const deleting = ref(false);
-const starting = ref(false);
-const stopping = ref(false);
-const restarting = ref(false);
-const taskPollingInterval = ref<ReturnType<typeof setInterval> | null>(null);
+  const appStore = useAppStore()
+  const logStore = useLogStore()
+  const loading = ref(true)
+  const refreshing = ref(false)
+  const savingEnvVar = ref(false)
+  const deleting = ref(false)
+  const starting = ref(false)
+  const stopping = ref(false)
+  const restarting = ref(false)
+  const taskPollingInterval = ref<ReturnType<typeof setInterval> | null>(null)
 
-// Estado do banco de dados
-const appServices = ref<Service[]>([]);
-const creatingDatabase = ref(false);
-const deletingService = ref<number | null>(null);
+  // Estado do banco de dados
+  const appServices = ref<Service[]>([])
+  const creatingDatabase = ref(false)
+  const deletingService = ref<number | null>(null)
 
-// Estado do console de comandos
-const runningCommand = ref(false);
-const commandOutput = ref("");
-const commandSuccess = ref(true);
+  // Estado do console de comandos
+  const runningCommand = ref(false)
+  const commandOutput = ref('')
+  const commandSuccess = ref(true)
 
-onMounted(async () => {
-  try {
-    await appStore.fetchApp(appId);
-    if (appStore.currentApp?.id) {
-      await logStore.fetchLogsByApp(Number(appStore.currentApp.id));
-      await fetchServices();
-    }
-    startTaskPollingIfNeeded();
-  } finally {
-    loading.value = false;
-  }
-});
-
-onUnmounted(() => {
-  stopTaskPolling();
-});
-
-watch(
-  () => appStore.currentApp?.status,
-  (newStatus) => {
-    if (newStatus === "STARTING" || newStatus === "DELETING") {
-      startTaskPollingIfNeeded();
-    } else {
-      stopTaskPolling();
-      appStore.clearTaskStatus();
-    }
-  },
-);
-
-// --- Task Polling ---
-function startTaskPollingIfNeeded() {
-  const app = appStore.currentApp;
-  if (!app?.task_id || (app.status !== "STARTING" && app.status !== "DELETING"))
-    return;
-  stopTaskPolling();
-  pollTaskStatus();
-  taskPollingInterval.value = setInterval(pollTaskStatus, 2000);
-}
-
-function stopTaskPolling() {
-  if (taskPollingInterval.value) {
-    clearInterval(taskPollingInterval.value);
-    taskPollingInterval.value = null;
-  }
-}
-
-async function pollTaskStatus() {
-  try {
-    const status = await appStore.fetchAppStatus(appId);
-    if (status?.state === "SUCCESS" || status?.state === "FAILURE") {
-      stopTaskPolling();
-      await appStore.fetchApp(appId);
-    }
-  } catch (error_) {
-    console.error("Erro ao buscar status da task:", error_);
-  }
-}
-
-async function refreshStatus() {
-  refreshing.value = true;
-  try {
-    await appStore.fetchApp(appId);
-    if (appStore.currentApp?.task_id) {
-      await appStore.fetchAppStatus(appId);
-    }
-  } finally {
-    refreshing.value = false;
-  }
-}
-
-// --- Variáveis de Ambiente ---
-async function handleAddEnvVar(envVar: { key: string; value: string }) {
-  savingEnvVar.value = true;
-  try {
-    const currentVars = appStore.currentApp?.variables || {};
-    await appStore.updateApp(appId, {
-      variables: { ...currentVars, [envVar.key]: envVar.value },
-    });
-  } finally {
-    savingEnvVar.value = false;
-  }
-}
-
-async function removeEnvVar(key: string) {
-  const currentVars = { ...appStore.currentApp?.variables };
-  delete currentVars[key];
-  await appStore.updateApp(appId, { variables: currentVars });
-}
-
-// --- Controle do App ---
-async function handleDeleteApp() {
-  deleting.value = true;
-  try {
-    await appStore.deleteApp(appId);
-    router.push(`/projects/${projectId}`);
-  } finally {
-    deleting.value = false;
-  }
-}
-
-async function handleStartApp() {
-  starting.value = true;
-  try {
-    await appStore.startApp(appId);
-    await appStore.fetchApp(appId);
-  } catch (error_) {
-    console.error("Erro ao iniciar app:", error_);
-  } finally {
-    starting.value = false;
-  }
-}
-
-async function handleStopApp() {
-  stopping.value = true;
-  try {
-    await appStore.stopApp(appId);
-    await appStore.fetchApp(appId);
-  } catch (error_) {
-    console.error("Erro ao parar app:", error_);
-  } finally {
-    stopping.value = false;
-  }
-}
-
-async function handleRestartApp() {
-  restarting.value = true;
-  try {
-    await appStore.restartApp(appId);
-    await appStore.fetchApp(appId);
-  } catch (error_) {
-    console.error("Erro ao reiniciar app:", error_);
-  } finally {
-    restarting.value = false;
-  }
-}
-
-// --- Console / Comandos ---
-async function handleRunCommand(command: string) {
-  if (!command.trim() || !appStore.currentApp?.id) return;
-  runningCommand.value = true;
-  commandOutput.value = "";
-  commandSuccess.value = true;
-
-  try {
-    const result = await AppsService.runCommand(appId, command.trim());
-
-    if (result.task_id) {
-      if (appStore.currentApp) {
-        appStore.currentApp.task_id = result.task_id;
+  onMounted(async () => {
+    try {
+      await appStore.fetchApp(appId)
+      if (appStore.currentApp?.id) {
+        await logStore.fetchLogsByApp(Number(appStore.currentApp.id))
+        await fetchServices()
       }
+      startTaskPollingIfNeeded()
+    } finally {
+      loading.value = false
+    }
+  })
 
-      const pollCommandResult = async () => {
-        try {
-          const status = await AppsService.getAppStatus(appId);
-          if (status.state === "SUCCESS") {
-            commandOutput.value =
-              "Comando executado com sucesso! Veja detalhes nos Logs abaixo.";
-            commandSuccess.value = true;
-            runningCommand.value = false;
-            await refreshLogs();
-            return true;
-          } else if (status.state === "FAILURE") {
-            commandOutput.value = status.status || "Erro ao executar comando";
-            commandSuccess.value = false;
-            runningCommand.value = false;
-            await refreshLogs();
-            return true;
-          }
-          return false;
-        } catch {
-          return false;
+  onUnmounted(() => {
+    stopTaskPolling()
+  })
+
+  watch(
+    () => appStore.currentApp?.status,
+    newStatus => {
+      if (newStatus === 'STARTING' || newStatus === 'DELETING') {
+        startTaskPollingIfNeeded()
+      } else {
+        stopTaskPolling()
+        appStore.clearTaskStatus()
+      }
+    },
+  )
+
+  // --- Task Polling ---
+  function startTaskPollingIfNeeded () {
+    const app = appStore.currentApp
+    if (!app?.task_id || (app.status !== 'STARTING' && app.status !== 'DELETING'))
+      return
+    stopTaskPolling()
+    pollTaskStatus()
+    taskPollingInterval.value = setInterval(pollTaskStatus, 2000)
+  }
+
+  function stopTaskPolling () {
+    if (taskPollingInterval.value) {
+      clearInterval(taskPollingInterval.value)
+      taskPollingInterval.value = null
+    }
+  }
+
+  async function pollTaskStatus () {
+    try {
+      const status = await appStore.fetchAppStatus(appId)
+      if (status?.state === 'SUCCESS' || status?.state === 'FAILURE') {
+        stopTaskPolling()
+        await appStore.fetchApp(appId)
+      }
+    } catch (error_) {
+      console.error('Erro ao buscar status da task:', error_)
+    }
+  }
+
+  async function refreshStatus () {
+    refreshing.value = true
+    try {
+      await appStore.fetchApp(appId)
+      if (appStore.currentApp?.task_id) {
+        await appStore.fetchAppStatus(appId)
+      }
+    } finally {
+      refreshing.value = false
+    }
+  }
+
+  // --- Variáveis de Ambiente ---
+  async function handleAddEnvVar (envVar: { key: string, value: string }) {
+    savingEnvVar.value = true
+    try {
+      const currentVars = appStore.currentApp?.variables || {}
+      await appStore.updateApp(appId, {
+        variables: { ...currentVars, [envVar.key]: envVar.value },
+      })
+    } finally {
+      savingEnvVar.value = false
+    }
+  }
+
+  async function removeEnvVar (key: string) {
+    const currentVars = { ...appStore.currentApp?.variables }
+    delete currentVars[key]
+    await appStore.updateApp(appId, { variables: currentVars })
+  }
+
+  // --- Controle do App ---
+  async function handleDeleteApp () {
+    deleting.value = true
+    try {
+      await appStore.deleteApp(appId)
+      router.push(`/projects/${projectId}`)
+    } finally {
+      deleting.value = false
+    }
+  }
+
+  async function handleStartApp () {
+    starting.value = true
+    try {
+      await appStore.startApp(appId)
+      await appStore.fetchApp(appId)
+    } catch (error_) {
+      console.error('Erro ao iniciar app:', error_)
+    } finally {
+      starting.value = false
+    }
+  }
+
+  async function handleStopApp () {
+    stopping.value = true
+    try {
+      await appStore.stopApp(appId)
+      await appStore.fetchApp(appId)
+    } catch (error_) {
+      console.error('Erro ao parar app:', error_)
+    } finally {
+      stopping.value = false
+    }
+  }
+
+  async function handleRestartApp () {
+    restarting.value = true
+    try {
+      await appStore.restartApp(appId)
+      await appStore.fetchApp(appId)
+    } catch (error_) {
+      console.error('Erro ao reiniciar app:', error_)
+    } finally {
+      restarting.value = false
+    }
+  }
+
+  // --- Console / Comandos ---
+  async function handleRunCommand (command: string) {
+    if (!command.trim() || !appStore.currentApp?.id) return
+    runningCommand.value = true
+    commandOutput.value = ''
+    commandSuccess.value = true
+
+    try {
+      const result = await AppsService.runCommand(appId, command.trim())
+
+      if (result.task_id) {
+        if (appStore.currentApp) {
+          appStore.currentApp.task_id = result.task_id
         }
-      };
 
-      let attempts = 0;
-      const interval = setInterval(async () => {
-        attempts++;
-        const done = await pollCommandResult();
-        if (done || attempts > 30) {
-          clearInterval(interval);
-          if (attempts > 30 && runningCommand.value) {
-            commandOutput.value =
-              "Comando ainda em execução. Acompanhe o progresso nos Logs abaixo.";
-            commandSuccess.value = true;
-            runningCommand.value = false;
-            await refreshLogs();
+        const pollCommandResult = async () => {
+          try {
+            const status = await AppsService.getAppStatus(appId)
+            if (status.state === 'SUCCESS') {
+              commandOutput.value
+                = 'Comando executado com sucesso! Veja detalhes nos Logs abaixo.'
+              commandSuccess.value = true
+              runningCommand.value = false
+              await refreshLogs()
+              return true
+            } else if (status.state === 'FAILURE') {
+              commandOutput.value = status.status || 'Erro ao executar comando'
+              commandSuccess.value = false
+              runningCommand.value = false
+              await refreshLogs()
+              return true
+            }
+            return false
+          } catch {
+            return false
           }
         }
-      }, 2000);
-    }
-  } catch (error_: any) {
-    const errorData = error_?.response?.data;
-    if (errorData?.error) {
-      commandOutput.value = errorData.error;
-      if (errorData.allowed_commands) {
-        commandOutput.value +=
-          "\n\nComandos permitidos:\n" + errorData.allowed_commands.join("\n");
+
+        let attempts = 0
+        const interval = setInterval(async () => {
+          attempts++
+          const done = await pollCommandResult()
+          if (done || attempts > 30) {
+            clearInterval(interval)
+            if (attempts > 30 && runningCommand.value) {
+              commandOutput.value
+                = 'Comando ainda em execução. Acompanhe o progresso nos Logs abaixo.'
+              commandSuccess.value = true
+              runningCommand.value = false
+              await refreshLogs()
+            }
+          }
+        }, 2000)
       }
-    } else {
-      commandOutput.value = "Erro ao executar comando";
-    }
-    commandSuccess.value = false;
-    runningCommand.value = false;
-  }
-}
-
-// --- Banco de Dados / Serviços ---
-async function fetchServices() {
-  if (!appStore.currentApp?.id) return;
-  try {
-    const response = await ServicesService.getServicesByApp(
-      Number(appStore.currentApp.id),
-    );
-    appServices.value = response.results;
-  } catch (error_) {
-    console.error("Erro ao buscar serviços:", error_);
-    if (appStore.currentApp?.services) {
-      appServices.value = appStore.currentApp.services;
+    } catch (error_: any) {
+      const errorData = error_?.response?.data
+      if (errorData?.error) {
+        commandOutput.value = errorData.error
+        if (errorData.allowed_commands) {
+          commandOutput.value
+            += '\n\nComandos permitidos:\n' + errorData.allowed_commands.join('\n')
+        }
+      } else {
+        commandOutput.value = 'Erro ao executar comando'
+      }
+      commandSuccess.value = false
+      runningCommand.value = false
     }
   }
-}
 
-async function handleCreateDatabase() {
-  if (!appStore.currentApp?.id) return;
-  creatingDatabase.value = true;
-  try {
-    await ServicesService.createService({
-      app: Number(appStore.currentApp.id),
-      service_type: "postgres",
-    });
-    setTimeout(async () => {
-      await appStore.fetchApp(appId);
-      await fetchServices();
-      creatingDatabase.value = false;
-    }, 3000);
-  } catch (error_) {
-    console.error("Erro ao criar banco de dados:", error_);
-    creatingDatabase.value = false;
+  // --- Banco de Dados / Serviços ---
+  async function fetchServices () {
+    if (!appStore.currentApp?.id) return
+    try {
+      const response = await ServicesService.getServicesByApp(
+        Number(appStore.currentApp.id),
+      )
+      appServices.value = response.results
+    } catch (error_) {
+      console.error('Erro ao buscar serviços:', error_)
+      if (appStore.currentApp?.services) {
+        appServices.value = appStore.currentApp.services
+      }
+    }
   }
-}
 
-async function handleDeleteService(serviceId: number) {
-  deletingService.value = serviceId;
-  try {
-    await ServicesService.deleteService(serviceId);
-    setTimeout(async () => {
-      await appStore.fetchApp(appId);
-      await fetchServices();
-      deletingService.value = null;
-    }, 3000);
-  } catch (error_) {
-    console.error("Erro ao deletar serviço:", error_);
-    deletingService.value = null;
+  async function handleCreateDatabase () {
+    if (!appStore.currentApp?.id) return
+    creatingDatabase.value = true
+    try {
+      await ServicesService.createService({
+        app: Number(appStore.currentApp.id),
+        service_type: 'postgres',
+      })
+      setTimeout(async () => {
+        await appStore.fetchApp(appId)
+        await fetchServices()
+        creatingDatabase.value = false
+      }, 3000)
+    } catch (error_) {
+      console.error('Erro ao criar banco de dados:', error_)
+      creatingDatabase.value = false
+    }
   }
-}
 
-// --- Logs ---
-async function handleStreamLogs(taskId: string, afterId?: number) {
-  await logStore.streamLogs(taskId, afterId);
-}
+  async function handleDeleteService (serviceId: number) {
+    deletingService.value = serviceId
+    try {
+      await ServicesService.deleteService(serviceId)
+      setTimeout(async () => {
+        await appStore.fetchApp(appId)
+        await fetchServices()
+        deletingService.value = null
+      }, 3000)
+    } catch (error_) {
+      console.error('Erro ao deletar serviço:', error_)
+      deletingService.value = null
+    }
+  }
+
+  // --- Logs ---
+  async function handleStreamLogs (taskId: string, afterId?: number) {
+    await logStore.streamLogs(taskId, afterId)
+  }
 
 // --- Helpers importados de @/utils/status ---
 </script>
