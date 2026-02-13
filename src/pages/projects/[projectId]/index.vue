@@ -82,9 +82,11 @@
         <!-- Empty State -->
         <v-col v-if="projectApps.length === 0" cols="12">
           <v-card class="text-center pa-8">
-            <v-icon class="mb-4" color="grey" size="64"
-              >mdi-application-outline</v-icon
-            >
+            <v-icon
+              class="mb-4"
+              color="grey"
+              size="64"
+            >mdi-application-outline</v-icon>
             <h3 class="text-h6 mb-2">Nenhum app neste projeto</h3>
             <p class="text-grey mb-4">Crie seu primeiro app para começar</p>
             <v-btn color="primary" :to="`/projects/${projectId}/new`">
@@ -98,56 +100,56 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
-import { useRoute } from "vue-router";
+  import { computed, onMounted, ref } from 'vue'
+  import { useRoute } from 'vue-router'
 
-import { useAppStore, useProjectStore } from "@/stores";
+  import { useAppStore, useProjectStore } from '@/stores'
 
-const route = useRoute();
-const projectId = (route.params as { projectId: string }).projectId || "";
+  const route = useRoute()
+  const projectId = (route.params as { projectId: string }).projectId || ''
 
-const projectStore = useProjectStore();
-const appStore = useAppStore();
+  const projectStore = useProjectStore()
+  const appStore = useAppStore()
 
-const loading = ref(true);
+  const loading = ref(true)
 
-const projectApps = computed(() => {
-  return appStore.apps.filter((app) => app.is_owner !== false);
-});
+  const projectApps = computed(() => {
+    return appStore.apps.filter(app => app.is_owner !== false)
+  })
 
-onMounted(async () => {
-  try {
-    await projectStore.fetchProject(projectId);
-    await appStore.fetchAppsByProject(projectId);
-  } finally {
-    loading.value = false;
+  onMounted(async () => {
+    try {
+      await projectStore.fetchProject(projectId)
+      await appStore.fetchAppsByProject(projectId)
+    } finally {
+      loading.value = false
+    }
+  })
+
+  function formatDate (dateString?: string) {
+    if (!dateString) return '-'
+    return new Date(dateString).toLocaleDateString('pt-BR')
   }
-});
 
-function formatDate(dateString?: string) {
-  if (!dateString) return "-";
-  return new Date(dateString).toLocaleDateString("pt-BR");
-}
+  function getStatusColor (status?: string) {
+    const colors: Record<string, string> = {
+      RUNNING: 'success',
+      STOPPED: 'grey',
+      ERROR: 'error',
+      STARTING: 'warning',
+      DELETING: 'pink',
+    }
+    return colors[status || 'STOPPED'] || 'grey'
+  }
 
-function getStatusColor(status?: string) {
-  const colors: Record<string, string> = {
-    RUNNING: "success",
-    STOPPED: "grey",
-    ERROR: "error",
-    STARTING: "warning",
-    DELETING: "pink",
-  };
-  return colors[status || "STOPPED"] || "grey";
-}
-
-function getStatusIcon(status?: string) {
-  const icons: Record<string, string> = {
-    RUNNING: "mdi-check-circle",
-    STOPPED: "mdi-stop-circle",
-    ERROR: "mdi-alert-circle",
-    STARTING: "mdi-loading",
-    DELETING: "mdi-delete-clock",
-  };
-  return icons[status || "STOPPED"] || "mdi-circle";
-}
+  function getStatusIcon (status?: string) {
+    const icons: Record<string, string> = {
+      RUNNING: 'mdi-check-circle',
+      STOPPED: 'mdi-stop-circle',
+      ERROR: 'mdi-alert-circle',
+      STARTING: 'mdi-loading',
+      DELETING: 'mdi-delete-clock',
+    }
+    return icons[status || 'STOPPED'] || 'mdi-circle'
+  }
 </script>

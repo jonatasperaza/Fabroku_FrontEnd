@@ -41,8 +41,8 @@
           </v-avatar>
           {{
             authStore.user.name ||
-            authStore.user.username ||
-            authStore.user.email
+              authStore.user.username ||
+              authStore.user.email
           }}
           (você)
         </v-chip>
@@ -118,9 +118,10 @@
 
       <v-card-actions class="pa-6 pt-0">
         <v-spacer />
-        <v-btn variant="text" @click="$router.push('/projects')"
-          >Cancelar</v-btn
-        >
+        <v-btn
+          variant="text"
+          @click="$router.push('/projects')"
+        >Cancelar</v-btn>
         <v-btn
           color="primary"
           :disabled="!projectName?.trim()"
@@ -136,82 +137,82 @@
 </template>
 
 <script setup lang="ts">
-import type { User } from "@/interfaces";
+  import type { User } from '@/interfaces'
 
-import { ref } from "vue";
-import { useRouter } from "vue-router";
+  import { ref } from 'vue'
+  import { useRouter } from 'vue-router'
 
-import { UsersService } from "@/services";
-import { useAuthStore, useProjectStore } from "@/stores";
+  import { UsersService } from '@/services'
+  import { useAuthStore, useProjectStore } from '@/stores'
 
-const router = useRouter();
-const projectStore = useProjectStore();
-const authStore = useAuthStore();
+  const router = useRouter()
+  const projectStore = useProjectStore()
+  const authStore = useAuthStore()
 
-const projectName = ref("");
-const creating = ref(false);
-const searching = ref(false);
-const searchQuery = ref("");
-const searchResults = ref<User[]>([]);
-const selectedUsers = ref<User[]>([]);
-const searchTimeout = ref<ReturnType<typeof setTimeout> | null>(null);
+  const projectName = ref('')
+  const creating = ref(false)
+  const searching = ref(false)
+  const searchQuery = ref('')
+  const searchResults = ref<User[]>([])
+  const selectedUsers = ref<User[]>([])
+  const searchTimeout = ref<ReturnType<typeof setTimeout> | null>(null)
 
-async function handleSearch(query: string) {
-  if (searchTimeout.value) {
-    clearTimeout(searchTimeout.value);
-  }
-
-  if (!query || query.length < 2) {
-    searchResults.value = [];
-    return;
-  }
-
-  searchTimeout.value = setTimeout(async () => {
-    searching.value = true;
-    try {
-      const results = await UsersService.searchByUsername(query);
-      searchResults.value = results.filter((u) => u.id !== authStore.user?.id);
-    } catch (error_) {
-      console.error("Erro ao buscar usuários:", error_);
-      searchResults.value = [];
-    } finally {
-      searching.value = false;
-    }
-  }, 300);
-}
-
-async function handleCreate() {
-  if (!projectName.value.trim()) return;
-
-  creating.value = true;
-  try {
-    const userIds: number[] = [];
-
-    if (authStore.user?.id) {
-      userIds.push(authStore.user.id);
+  async function handleSearch (query: string) {
+    if (searchTimeout.value) {
+      clearTimeout(searchTimeout.value)
     }
 
-    for (const user of selectedUsers.value) {
-      if (user.id && !userIds.includes(user.id)) {
-        userIds.push(user.id);
+    if (!query || query.length < 2) {
+      searchResults.value = []
+      return
+    }
+
+    searchTimeout.value = setTimeout(async () => {
+      searching.value = true
+      try {
+        const results = await UsersService.searchByUsername(query)
+        searchResults.value = results.filter(u => u.id !== authStore.user?.id)
+      } catch (error_) {
+        console.error('Erro ao buscar usuários:', error_)
+        searchResults.value = []
+      } finally {
+        searching.value = false
       }
-    }
-
-    const project = await projectStore.createProject({
-      name: projectName.value,
-      users: userIds,
-    });
-
-    // Navega para o projeto criado
-    if (project?.id) {
-      router.push(`/projects/${project.id}`);
-    } else {
-      router.push("/projects");
-    }
-  } catch (error_) {
-    console.error("Erro ao criar projeto:", error_);
-  } finally {
-    creating.value = false;
+    }, 300)
   }
-}
+
+  async function handleCreate () {
+    if (!projectName.value.trim()) return
+
+    creating.value = true
+    try {
+      const userIds: number[] = []
+
+      if (authStore.user?.id) {
+        userIds.push(authStore.user.id)
+      }
+
+      for (const user of selectedUsers.value) {
+        if (user.id && !userIds.includes(user.id)) {
+          userIds.push(user.id)
+        }
+      }
+
+      const project = await projectStore.createProject({
+        name: projectName.value,
+        users: userIds,
+      })
+
+      // Navega para o projeto criado
+      if (project?.id) {
+        router.push(`/projects/${project.id}`)
+      } else {
+        router.push('/projects')
+      }
+    } catch (error_) {
+      console.error('Erro ao criar projeto:', error_)
+    } finally {
+      creating.value = false
+    }
+  }
 </script>
