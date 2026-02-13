@@ -18,7 +18,7 @@
       <!-- ========== COLUNA ESQUERDA — FORMULÁRIO ========== -->
       <v-col cols="12" lg="8">
         <!-- Seção 1 — Identificação do App -->
-        <v-card class="mb-6" variant="outlined">
+        <v-card class="mb-6 app-card" variant="flat">
           <v-card-title class="d-flex align-center ga-2 pa-5 pb-1">
             <v-icon color="primary" size="small"
               >mdi-card-account-details-outline</v-icon
@@ -42,7 +42,7 @@
               </v-col>
               <v-col class="pl-3" cols="auto">
                 <span class="text-body-2 text-medium-emphasis"
-                  >.fabroku.ifc.edu.br</span
+                  >.fabricadesoftware.ifc.edu.br</span
                 >
               </v-col>
             </v-row>
@@ -84,7 +84,7 @@
         </v-card>
 
         <!-- Seção 2 — Integração GitHub -->
-        <v-card class="mb-6" variant="outlined">
+        <v-card class="mb-6 app-card" variant="flat">
           <v-card-title
             class="d-flex align-center justify-space-between pa-5 pb-1"
           >
@@ -220,7 +220,7 @@
         </v-card>
 
         <!-- Seção 3 — Variáveis de Ambiente (expansível) -->
-        <v-card class="mb-6" variant="outlined">
+        <v-card class="mb-6 app-card" variant="flat">
           <v-expansion-panels variant="accordion">
             <v-expansion-panel elevation="0">
               <v-expansion-panel-title class="pa-5">
@@ -307,7 +307,7 @@
         </v-card>
 
         <!-- Seção 4 — Configurações de Build (expansível) -->
-        <v-card class="mb-6" variant="outlined">
+        <v-card class="mb-6 app-card" variant="flat">
           <v-expansion-panels variant="accordion">
             <v-expansion-panel elevation="0">
               <v-expansion-panel-title class="pa-5">
@@ -355,7 +355,7 @@
       <v-col cols="12" lg="4">
         <div class="sticky-sidebar">
           <!-- Card Resumo -->
-          <v-card class="mb-4" variant="outlined">
+          <v-card class="mb-4 app-card" variant="flat">
             <v-card-title class="pa-5 pb-3 text-subtitle-1 font-weight-bold">
               Resumo
             </v-card-title>
@@ -438,7 +438,7 @@
           </v-card>
 
           <!-- Card Dica -->
-          <v-card color="surface-variant" variant="tonal">
+          <v-card class="app-card" variant="flat">
             <v-card-text class="pa-4">
               <div class="d-flex align-start ga-3">
                 <v-icon color="info" size="20">mdi-information</v-icon>
@@ -826,5 +826,10 @@ async function handleDeploy() {
 .sticky-sidebar {
   position: sticky;
   top: 80px;
+}
+
+.app-card {
+  background-color: #1c2127 !important;
+  border: none !important;
 }
 </style>
