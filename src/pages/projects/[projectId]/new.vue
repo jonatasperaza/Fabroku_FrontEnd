@@ -42,7 +42,7 @@
                 />
               </v-col>
               <v-col class="pl-3" cols="auto">
-                <span class="text-body-2 text-medium-emphasis">.fabricadesoftware.ifc.edu.br</span>
+                <span class="text-body-2 text-medium-emphasis">.productionapp3.fabricadesoftware.ifc.edu.br</span>
               </v-col>
             </v-row>
             <div class="text-caption text-medium-emphasis mt-1">
