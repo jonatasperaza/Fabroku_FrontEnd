@@ -13,7 +13,7 @@
       alt="Configuração de deploy keys na organização GitHub"
       class="mx-auto mb-4"
       max-width="600"
-      src="/assets/deploy-keys-org.png"
+      src="../../assets/deploy-keys-org.png"
     />
     <v-btn
       v-if="helpUrl"
