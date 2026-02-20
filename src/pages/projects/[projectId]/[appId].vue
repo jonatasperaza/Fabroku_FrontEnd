@@ -42,6 +42,15 @@
         >
           Atualizar Status
         </v-btn>
+        <v-btn
+          color="error"
+          prepend-icon="mdi-lifebuoy"
+          variant="tonal"
+          class="ml-2"
+          @click="diagnoseAppError"
+        >
+          Diagnosticar problema
+        </v-btn>
       </div>
 
       <v-row>
@@ -160,6 +169,37 @@
 </template>
 
 <script setup lang="ts">
+    // Diagnóstico manual de erro
+    async function diagnoseAppError() {
+      if (!appStore.currentApp?.id) return;
+      try {
+        const status = await appStore.fetchAppStatus(String(appStore.currentApp.id));
+        if (
+          status?.state === "FAILURE" &&
+          (status as any).error_type === "DeployKeysDisabled"
+        ) {
+          router.push({
+            path: "/projects/deploy-keys-disabled",
+            query: { help_url: (status as any).help_url || undefined },
+          });
+          return;
+        }
+        if (
+          status?.state === "FAILURE" &&
+          (status as any).error_type === "OrgPermissionDenied"
+        ) {
+          router.push({
+            path: "/projects/org-permission-denied",
+            query: { help_url: (status as any).help_url || undefined },
+          });
+          return;
+        }
+        // Pode adicionar outros diagnósticos aqui
+        alert("Nenhum problema crítico detectado. Veja os logs para mais detalhes.");
+      } catch {
+        alert("Erro ao diagnosticar. Tente novamente.");
+      }
+    }
   import type { Service } from '@/interfaces'
 
   import { onMounted, onUnmounted, ref, watch } from 'vue'
