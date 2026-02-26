@@ -248,7 +248,7 @@
               prefix: '',
               prefixCls: '',
               text: trimmed,
-              cls: 'log-line--dokku',
+              cls: '',
             })
           }
         }
@@ -524,8 +524,5 @@
     margin-top: 4px;
   }
 
-  &--dokku {
-    color: #8b949e;
-  }
 }
 </style>
