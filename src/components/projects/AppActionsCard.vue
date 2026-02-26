@@ -52,6 +52,19 @@
         Reiniciar
       </v-btn>
 
+      <!-- Botão Diagnosticar (só quando há erro) -->
+      <v-btn
+        v-if="status === 'ERROR' || status === 'FAILED'"
+        block
+        class="mb-2"
+        color="warning"
+        prepend-icon="mdi-lifebuoy"
+        variant="tonal"
+        @click="emit('diagnose')"
+      >
+        Diagnosticar problema
+      </v-btn>
+
       <v-divider class="my-3" />
 
       <!-- Botão Deletar -->
@@ -127,6 +140,7 @@
     stop: []
     restart: []
     delete: []
+    diagnose: []
   }>()
 
   const confirmDelete = ref(false)

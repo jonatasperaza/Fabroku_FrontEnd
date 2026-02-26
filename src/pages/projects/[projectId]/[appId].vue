@@ -44,20 +44,6 @@
         </v-btn>
       </div>
 
-      <!-- Botão Diagnosticar problema destacado acima dos logs -->
-      <div class="d-flex justify-end mb-2">
-        <v-btn
-          class="diagnose-btn"
-          color="error"
-          prepend-icon="mdi-lifebuoy"
-          size="large"
-          variant="elevated"
-          @click="diagnoseAppError"
-        >
-          Diagnosticar problema
-        </v-btn>
-      </div>
-
       <v-row>
         <v-col cols="12" md="8">
           <!-- Card de Progresso da Task -->
@@ -151,6 +137,7 @@
             :status="appStore.currentApp.status"
             :stopping="stopping"
             @delete="handleDeleteApp"
+            @diagnose="diagnoseAppError"
             @restart="handleRestartApp"
             @start="handleStartApp"
             @stop="handleStopApp"
