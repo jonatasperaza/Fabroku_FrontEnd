@@ -113,9 +113,13 @@
             :app-name="appStore.currentApp.name_dokku ?? undefined"
             :creating="creatingDatabase"
             :deleting-id="deletingService"
+            :linking="linkingService"
+            :unlinking-id="unlinkingService"
             :services="appServices"
             @create="handleCreateDatabase"
             @delete="handleDeleteService"
+            @link="openLinkDialog"
+            @unlink="handleUnlinkService"
           />
 
           <AppConsoleCard
@@ -148,6 +152,39 @@
         </v-col>
       </v-row>
     </template>
+
+    <!-- Dialog para vincular serviço existente -->
+    <v-dialog v-model="linkServiceDialog" max-width="500" persistent>
+      <v-card>
+        <v-card-title>Vincular banco existente</v-card-title>
+        <v-card-text>
+          <v-select
+            v-model="selectedServiceToLink"
+            :items="availableServicesToLink"
+            item-title="name"
+            item-value="id"
+            label="Selecione o serviço"
+            variant="outlined"
+          />
+          <v-alert v-if="availableServicesToLink.length === 0" class="mt-3" color="info" density="compact" variant="tonal">
+            Nenhum serviço disponível. Crie um em
+            <router-link :to="`/projects/${projectId}/services/new`">Serviços do projeto</router-link>.
+          </v-alert>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="linkServiceDialog = false">Cancelar</v-btn>
+          <v-btn
+            color="primary"
+            :disabled="!selectedServiceToLink"
+            :loading="linkingService"
+            @click="handleLinkService"
+          >
+            Vincular
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <!-- Logs da Aplicação -->
     <v-row v-if="appStore.currentApp">
@@ -231,7 +268,12 @@
   // Estado do banco de dados
   const appServices = ref<Service[]>([])
   const creatingDatabase = ref(false)
+  const linkingService = ref(false)
+  const unlinkingService = ref<number | null>(null)
   const deletingService = ref<number | null>(null)
+  const linkServiceDialog = ref(false)
+  const availableServicesToLink = ref<Service[]>([])
+  const selectedServiceToLink = ref<number | null>(null)
 
   // Estado do console de comandos
   const runningCommand = ref(false)
@@ -502,6 +544,48 @@
     } catch (error_) {
       console.error('Erro ao criar banco de dados:', error_)
       creatingDatabase.value = false
+    }
+  }
+
+  async function openLinkDialog () {
+    try {
+      const response = await ServicesService.getServicesByProject(projectId)
+      availableServicesToLink.value = response.results.filter(s => !s.app)
+      selectedServiceToLink.value = availableServicesToLink.value[0]?.id ?? null
+      linkServiceDialog.value = true
+    } catch (error_) {
+      console.error('Erro ao buscar serviços:', error_)
+    }
+  }
+
+  async function handleLinkService () {
+    if (!selectedServiceToLink.value || !appStore.currentApp?.id) return
+    linkingService.value = true
+    try {
+      await ServicesService.linkService(selectedServiceToLink.value, appStore.currentApp.id)
+      linkServiceDialog.value = false
+      selectedServiceToLink.value = null
+      await appStore.fetchApp(appId)
+      await fetchServices()
+    } catch (error_) {
+      console.error('Erro ao vincular serviço:', error_)
+    } finally {
+      linkingService.value = false
+    }
+  }
+
+  async function handleUnlinkService (serviceId: number) {
+    unlinkingService.value = serviceId
+    try {
+      await ServicesService.unlinkService(serviceId)
+      setTimeout(async () => {
+        await appStore.fetchApp(appId)
+        await fetchServices()
+        unlinkingService.value = null
+      }, 2000)
+    } catch (error_) {
+      console.error('Erro ao desvincular serviço:', error_)
+      unlinkingService.value = null
     }
   }
 

@@ -1,22 +1,34 @@
 <template>
   <v-card class="mb-4">
-    <v-card-title class="d-flex justify-space-between align-center">
+    <v-card-title class="d-flex justify-space-between align-center flex-wrap ga-2">
       <span>
         <v-icon class="mr-2">mdi-database</v-icon>
         Banco de Dados
       </span>
-      <v-btn
-        v-if="!hasDatabase"
-        color="primary"
-        :disabled="!appName"
-        :loading="creating"
-        prepend-icon="mdi-database-plus"
-        size="small"
-        variant="tonal"
-        @click="emit('create')"
-      >
-        Criar PostgreSQL
-      </v-btn>
+      <div v-if="!hasDatabase" class="d-flex ga-2">
+        <v-btn
+          color="primary"
+          :disabled="!appName"
+          :loading="creating"
+          prepend-icon="mdi-database-plus"
+          size="small"
+          variant="tonal"
+          @click="emit('create')"
+        >
+          Criar PostgreSQL
+        </v-btn>
+        <v-btn
+          color="primary"
+          :disabled="!appName"
+          :loading="linking"
+          prepend-icon="mdi-link"
+          size="small"
+          variant="tonal"
+          @click="emit('link')"
+        >
+          Vincular existente
+        </v-btn>
+      </div>
     </v-card-title>
     <v-card-text>
       <!-- Sem banco de dados -->
@@ -62,6 +74,21 @@
             </v-list-item-subtitle>
             <template #append>
               <v-btn
+                v-if="showUnlink !== false"
+                color="warning"
+                icon
+                :loading="unlinkingId === service.id"
+                size="small"
+                variant="text"
+                @click="emit('unlink', service.id!)"
+              >
+                <v-icon>mdi-link-off</v-icon>
+                <v-tooltip
+                  activator="parent"
+                  location="top"
+                >Desvincular (mantém o banco)</v-tooltip>
+              </v-btn>
+              <v-btn
                 color="error"
                 icon
                 :loading="deletingId === service.id"
@@ -73,7 +100,7 @@
                 <v-tooltip
                   activator="parent"
                   location="top"
-                >Remover banco</v-tooltip>
+                >Excluir banco</v-tooltip>
               </v-btn>
             </template>
           </v-list-item>
@@ -103,11 +130,16 @@
     services: Service[]
     appName?: string
     creating?: boolean
+    linking?: boolean
+    unlinkingId?: number | null
     deletingId?: number | null
+    showUnlink?: boolean
   }>()
 
   const emit = defineEmits<{
     create: []
+    link: []
+    unlink: [serviceId: number]
     delete: [serviceId: number]
   }>()
 

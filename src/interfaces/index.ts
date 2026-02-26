@@ -48,21 +48,22 @@ interface Service {
   id?: number
   name: string
   service_type: 'postgres' | 'redis' | 'rabbitmq'
-  app: number
-  project: string
+  app?: number | null
+  project: string | number
   container_name?: string | null
   host?: string
   port?: number
+  task_id?: string | null
   created_at?: string
   updated_at?: string
 }
 
 interface TaskStatus {
   task_id: string
-  state: 'PENDING' | 'PROGRESS' | 'SUCCESS' | 'FAILURE'
-  current: number
-  total: number
-  status: string
+  state: 'PENDING' | 'PROGRESS' | 'SUCCESS' | 'FAILURE' | 'UNKNOWN'
+  current?: number
+  total?: number
+  status?: string
 }
 
 type LogLevel = 'DEBUG' | 'INFO' | 'WARNING' | 'ERROR' | 'SUCCESS' | 'DOKKU'

@@ -30,15 +30,25 @@
         </v-card-text>
       </v-card>
 
-      <div class="d-flex justify-space-between align-center mb-4">
+      <div class="d-flex justify-space-between align-center mb-4 flex-wrap ga-2">
         <h2 class="text-h5">Apps deste Projeto</h2>
-        <v-btn
-          color="primary"
-          prepend-icon="mdi-plus"
-          :to="`/projects/${projectId}/new`"
-        >
-          Novo App
-        </v-btn>
+        <div class="d-flex ga-2">
+          <v-btn
+            color="primary"
+            prepend-icon="mdi-database"
+            variant="tonal"
+            :to="`/projects/${projectId}/services`"
+          >
+            Serviços
+          </v-btn>
+          <v-btn
+            color="primary"
+            prepend-icon="mdi-plus"
+            :to="`/projects/${projectId}/new`"
+          >
+            Novo App
+          </v-btn>
+        </div>
       </div>
 
       <!-- Loading Apps -->
