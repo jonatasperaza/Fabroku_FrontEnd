@@ -177,9 +177,10 @@
     <v-row v-if="appStore.currentApp">
       <v-col cols="12">
         <AppLogsCard
-          :loading="logStore.loading"
-          :logs="logStore.logs"
-          :task-id="appStore.currentApp?.task_id || undefined"
+          :loading="logsLoading"
+          :logs="displayLogs"
+          :task-id="deployTaskId"
+          :title="logsTitle"
           @stream-logs="handleStreamLogs"
         />
       </v-col>
@@ -191,7 +192,7 @@
     // Diagnóstico manual de erro
   import type { Service } from '@/interfaces'
 
-  import { onMounted, onUnmounted, ref, watch } from 'vue'
+  import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
 
   import AppActionsCard from '@/components/projects/AppActionsCard.vue'
@@ -202,6 +203,7 @@
   import AppLogsCard from '@/components/projects/AppLogsCard.vue'
   import AppPreviewCard from '@/components/projects/AppPreviewCard.vue'
   import AppsService from '@/services/apps'
+  import LogsService from '@/services/logs'
   import ServicesService from '@/services/services'
   import { useAppStore, useLogStore } from '@/stores'
   import { formatStatus, getStatusColor, getStatusIcon } from '@/utils/status'
@@ -267,6 +269,64 @@
   const commandOutput = ref('')
   const commandSuccess = ref(true)
 
+  // Logs runtime (quando app está RUNNING)
+  const runtimeLogsLines = ref<string[]>([])
+  const runtimeLogsLoading = ref(false)
+  let runtimePollInterval: ReturnType<typeof setInterval> | null = null
+
+  const isRunning = computed(() => appStore.currentApp?.status === 'RUNNING')
+  const displayLogs = computed(() => {
+    if (isRunning.value) {
+      return runtimeLogsLines.value.map((line, i) => ({
+        id: i,
+        message: line,
+        level: 'DOKKU' as const,
+        app: appStore.currentApp?.id ?? 0,
+        created_at: undefined,
+      }))
+    }
+    return logStore.logs
+  })
+  const logsLoading = computed(() => {
+    if (isRunning.value) return runtimeLogsLoading.value
+    return logStore.loading
+  })
+  const deployTaskId = computed(() => {
+    if (isRunning.value) return undefined
+    return appStore.currentApp?.task_id ?? undefined
+  })
+  const logsTitle = computed(() => {
+    if (isRunning.value) return 'Logs da Aplicação'
+    return 'Deploy Logs'
+  })
+
+  async function fetchRuntimeLogs () {
+    if (!appStore.currentApp?.id || !appStore.currentApp?.name_dokku) return
+    runtimeLogsLoading.value = true
+    try {
+      const { lines } = await LogsService.getAppRuntimeLogs(appStore.currentApp.id, 200)
+      runtimeLogsLines.value = lines
+    } catch (error) {
+      console.error('Erro ao buscar logs do app:', error)
+      runtimeLogsLines.value = []
+    } finally {
+      runtimeLogsLoading.value = false
+    }
+  }
+
+  function startRuntimeLogsPolling () {
+    if (runtimePollInterval) return
+    fetchRuntimeLogs()
+    runtimePollInterval = setInterval(fetchRuntimeLogs, 4000)
+  }
+
+  function stopRuntimeLogsPolling () {
+    if (runtimePollInterval) {
+      clearInterval(runtimePollInterval)
+      runtimePollInterval = null
+    }
+  }
+
   // --- Stream de logs em tempo real ---
   let logStreamActive = false
   function shouldStreamLogs () {
@@ -298,6 +358,9 @@
         await startLogStreamIfNeeded()
       }
       startTaskPollingIfNeeded()
+      if (appStore.currentApp?.status === 'RUNNING') {
+        startRuntimeLogsPolling()
+      }
     } finally {
       loading.value = false
     }
@@ -305,6 +368,7 @@
 
   onUnmounted(() => {
     stopTaskPolling()
+    stopRuntimeLogsPolling()
   })
 
   watch(
@@ -316,11 +380,17 @@
         stopTaskPolling()
         appStore.clearTaskStatus()
       }
-      // Stream de logs automático
+      // Stream de logs automático (deploy)
       if (shouldStreamLogs()) {
         startLogStreamIfNeeded()
       } else {
         stopLogStream()
+      }
+      // Logs runtime quando RUNNING
+      if (newStatus === 'RUNNING') {
+        startRuntimeLogsPolling()
+      } else {
+        stopRuntimeLogsPolling()
       }
     },
   )

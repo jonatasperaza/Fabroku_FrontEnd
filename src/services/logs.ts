@@ -47,6 +47,13 @@ class LogsService {
     const response = await apiClient.get(`/logs/stream/${taskId}/${params}`)
     return response.data.logs ?? response.data
   }
+
+  async getAppRuntimeLogs (appId: number, num?: number): Promise<{ lines: string[] }> {
+    const params = new URLSearchParams({ app: appId.toString() })
+    if (num) params.append('num', num.toString())
+    const response = await apiClient.get(`/logs/app-runtime/?${params.toString()}`)
+    return response.data
+  }
 }
 
 export default new LogsService()
