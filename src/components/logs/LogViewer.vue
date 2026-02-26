@@ -21,6 +21,24 @@
         </v-chip>
       </div>
       <div class="d-flex align-center ga-1">
+        <!-- Toggle resumo / detalhado -->
+        <v-btn-toggle
+          v-model="viewMode"
+          class="log-terminal__toggle"
+          density="compact"
+          mandatory
+          rounded="lg"
+        >
+          <v-btn size="x-small" value="summary">
+            <v-icon size="14" start>mdi-text-short</v-icon>
+            Resumo
+          </v-btn>
+          <v-btn size="x-small" value="verbose">
+            <v-icon size="14" start>mdi-text-long</v-icon>
+            Detalhado
+          </v-btn>
+        </v-btn-toggle>
+
         <v-btn
           v-if="!streaming && taskId"
           density="compact"
@@ -59,6 +77,21 @@
       </div>
     </div>
 
+    <!-- Error banner -->
+    <div v-if="errorSummary.length > 0" class="log-terminal__error-banner">
+      <div class="log-terminal__error-banner-header">
+        <v-icon color="error" size="16">mdi-alert-circle</v-icon>
+        <span>{{ errorSummary.length === 1 ? 'Erro detectado' : `${errorSummary.length} erros detectados` }}</span>
+      </div>
+      <div
+        v-for="(err, idx) in errorSummary"
+        :key="idx"
+        class="log-terminal__error-banner-line"
+      >
+        {{ err }}
+      </div>
+    </div>
+
     <!-- Terminal body -->
     <div ref="terminalBody" class="log-terminal__body">
       <div
@@ -68,20 +101,50 @@
         Nenhum log disponível
       </div>
 
-      <div
-        v-for="(line, idx) in displayLines"
-        :key="idx"
-        class="log-line"
-        :class="line.cls"
-      >
-        <span v-if="line.time" class="log-line__time">{{ line.time }}</span>
-        <span
-          v-if="line.prefix"
-          class="log-line__prefix"
-          :class="line.prefixCls"
-        >{{ line.prefix }}</span>
-        <span class="log-line__text">{{ line.text }}</span>
-      </div>
+      <template v-for="(item, idx) in displayLines" :key="idx">
+        <!-- Grupo colapsável de build output -->
+        <div
+          v-if="item.type === 'group'"
+          class="log-group"
+        >
+          <div
+            class="log-group__header"
+            @click="toggleGroup(item.groupId!)"
+          >
+            <v-icon class="log-group__chevron" :class="{ 'log-group__chevron--open': expandedGroups.has(item.groupId!) }" size="12">
+              mdi-chevron-right
+            </v-icon>
+            <span class="log-group__step">{{ item.text }}</span>
+            <span v-if="item.childCount" class="log-group__count">{{ item.childCount }} linhas</span>
+            <span v-if="item.hasErrors" class="log-group__error-badge">erro</span>
+          </div>
+          <div v-if="expandedGroups.has(item.groupId!)" class="log-group__body">
+            <div
+              v-for="(child, cidx) in item.children"
+              :key="cidx"
+              class="log-line"
+              :class="child.cls"
+            >
+              <span class="log-line__text">{{ child.text }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Linha normal -->
+        <div
+          v-else
+          class="log-line"
+          :class="item.cls"
+        >
+          <span v-if="item.time" class="log-line__time">{{ item.time }}</span>
+          <span
+            v-if="item.prefix"
+            class="log-line__prefix"
+            :class="item.prefixCls"
+          >{{ item.prefix }}</span>
+          <span class="log-line__text">{{ item.text }}</span>
+        </div>
+      </template>
 
       <div v-if="loading" class="log-terminal__loading">
         <v-progress-circular
@@ -109,11 +172,16 @@
   }
 
   interface DisplayLine {
+    type: 'line' | 'group'
     time: string
     prefix: string
     prefixCls: string
     text: string
     cls: string
+    groupId?: string
+    childCount?: number
+    hasErrors?: boolean
+    children?: DisplayLine[]
   }
 
   const props = withDefaults(defineProps<Props>(), {
@@ -131,16 +199,60 @@
   const streaming = ref(false)
   const streamInterval = ref<number | null>(null)
   const expanded = ref(false)
+  const viewMode = ref<'summary' | 'verbose'>('summary')
+  const expandedGroups = ref<Set<string>>(new Set())
+
+  const ERROR_PATTERNS = /error|failed|fatal|denied|cannot|couldn't|could not|exception|! /i
+
+  function isErrorLine (text: string): boolean {
+    return ERROR_PATTERNS.test(text)
+  }
 
   /**
-   * Transforma os logs brutos em linhas de terminal limpas.
-   * Filtra ruído e mantém só o que importa.
+   * Extrai um resumo dos erros para o banner.
+   * Coleta mensagens de logs ERROR e linhas de erro importantes do DOKKU output.
+   */
+  const errorSummary = computed<string[]>(() => {
+    const errors: string[] = []
+    for (const log of props.logs) {
+      if (log.level === 'ERROR') {
+        const msg = cleanMessage(log.message)
+        if (msg && !errors.includes(msg)) {
+          errors.push(msg)
+        }
+      }
+
+      if (log.level === 'DOKKU') {
+        const msg = cleanMessage(log.message)
+        for (const line of msg.split('\n')) {
+          const trimmed = line.trim()
+          if (!trimmed) continue
+          if (
+            /^(ERROR:|fatal:|! )/i.test(trimmed)
+            || /permission denied/i.test(trimmed)
+            || /build failed/i.test(trimmed)
+            || /could not read from remote/i.test(trimmed)
+          ) {
+            if (!errors.includes(trimmed)) {
+              errors.push(trimmed)
+            }
+          }
+        }
+      }
+    }
+    return errors
+  })
+
+  /**
+   * Transforma os logs brutos em linhas de terminal.
+   * No modo "summary", agrupa output Dokku em seções colapsáveis.
+   * No modo "verbose", mostra tudo expandido.
    */
   const displayLines = computed<DisplayLine[]>(() => {
     const lines: DisplayLine[] = []
+    let groupIndex = 0
 
     for (const log of props.logs) {
-      // Pula logs DEBUG — são muito verbosos
       if (log.level === 'DEBUG') continue
 
       const time = formatTime(log.created_at)
@@ -148,40 +260,143 @@
 
       if (!message.trim()) continue
 
-      // Logs DOKKU: quebra em múltiplas linhas (output do build)
       if (log.level === 'DOKKU') {
         const sublines = message
           .split(/\n|(?=----->)|(?======>)/)
           .filter(Boolean)
+
+        if (viewMode.value === 'verbose') {
+          for (const sub of sublines) {
+            const trimmed = sub.trim()
+            if (!trimmed) continue
+            const isStep = trimmed.startsWith('----->') || trimmed.startsWith('=====>')
+            const isErr = isErrorLine(trimmed)
+
+            if (isStep) {
+              lines.push({
+                type: 'line',
+                time: '',
+                prefix: '▸',
+                prefixCls: 'log-line__prefix--step',
+                text: trimmed.replace(/^[-=]+>\s*/, ''),
+                cls: 'log-line--step',
+              })
+            } else {
+              lines.push({
+                type: 'line',
+                time: '',
+                prefix: isErr ? '!' : '',
+                prefixCls: isErr ? 'log-line__prefix--error' : '',
+                text: trimmed,
+                cls: isErr ? 'log-line--error' : 'log-line--dokku',
+              })
+            }
+          }
+          continue
+        }
+
+        // Modo summary: agrupa linhas Dokku em seções colapsáveis
+        let currentGroupLabel = ''
+        let currentChildren: DisplayLine[] = []
+        let groupHasErrors = false
+
         for (const sub of sublines) {
           const trimmed = sub.trim()
           if (!trimmed) continue
 
-          if (trimmed.startsWith('----->') || trimmed.startsWith('=====>')) {
-            lines.push({
-              time: '',
-              prefix: '▸',
-              prefixCls: 'log-line__prefix--step',
-              text: trimmed.replace(/^[-=]+>\s*/, ''),
-              cls: 'log-line--step',
-            })
+          const isStep = trimmed.startsWith('----->') || trimmed.startsWith('=====>')
+          const isErr = isErrorLine(trimmed)
+
+          if (isStep) {
+            // Fecha grupo anterior se existir
+            if (currentGroupLabel && currentChildren.length > 0) {
+              const gid = `g-${groupIndex++}`
+              if (groupHasErrors) expandedGroups.value.add(gid)
+              lines.push({
+                type: 'group',
+                time: '',
+                prefix: '',
+                prefixCls: '',
+                text: currentGroupLabel,
+                cls: '',
+                groupId: gid,
+                childCount: currentChildren.length,
+                hasErrors: groupHasErrors,
+                children: currentChildren,
+              })
+            }
+            currentGroupLabel = trimmed.replace(/^[-=]+>\s*/, '')
+            currentChildren = []
+            groupHasErrors = false
           } else {
-            lines.push({
-              time: '',
-              prefix: '',
-              prefixCls: '',
-              text: trimmed,
-              cls: 'log-line--dokku',
-            })
+            if (isErr) groupHasErrors = true
+
+            // No modo summary, só mostra linhas de erro fora do grupo
+            if (isErr) {
+              currentChildren.push({
+                type: 'line',
+                time: '',
+                prefix: '!',
+                prefixCls: 'log-line__prefix--error',
+                text: trimmed,
+                cls: 'log-line--error',
+              })
+            } else {
+              currentChildren.push({
+                type: 'line',
+                time: '',
+                prefix: '',
+                prefixCls: '',
+                text: trimmed,
+                cls: 'log-line--dokku',
+              })
+            }
           }
         }
+
+        // Fecha último grupo
+        if (currentGroupLabel && currentChildren.length > 0) {
+          const gid = `g-${groupIndex++}`
+          if (groupHasErrors) expandedGroups.value.add(gid)
+          lines.push({
+            type: 'group',
+            time: '',
+            prefix: '',
+            prefixCls: '',
+            text: currentGroupLabel,
+            cls: '',
+            groupId: gid,
+            childCount: currentChildren.length,
+            hasErrors: groupHasErrors,
+            children: currentChildren,
+          })
+        } else if (currentChildren.length > 0 && !currentGroupLabel) {
+          // Linhas Dokku soltas (sem step header)
+          const gid = `g-${groupIndex++}`
+          const hasErr = currentChildren.some(c => c.cls === 'log-line--error')
+          if (hasErr) expandedGroups.value.add(gid)
+          lines.push({
+            type: 'group',
+            time: '',
+            prefix: '',
+            prefixCls: '',
+            text: 'Build output',
+            cls: '',
+            groupId: gid,
+            childCount: currentChildren.length,
+            hasErrors: hasErr,
+            children: currentChildren,
+          })
+        }
+
         continue
       }
 
-      // Outros logs: uma linha com prefixo de nível
+      // Outros logs (INFO, ERROR, WARNING, SUCCESS)
       const { prefix, prefixCls, cls } = getLevelStyle(log.level)
 
       lines.push({
+        type: 'line',
         time,
         prefix,
         prefixCls,
@@ -192,6 +407,14 @@
 
     return lines
   })
+
+  function toggleGroup (groupId: string) {
+    if (expandedGroups.value.has(groupId)) {
+      expandedGroups.value.delete(groupId)
+    } else {
+      expandedGroups.value.add(groupId)
+    }
+  }
 
   function getLevelStyle (level: string) {
     switch (level) {
@@ -234,8 +457,8 @@
 
   function cleanMessage (msg: string): string {
     return msg
-      .replace(/\[1G/g, '') // ANSI control chars
-      .replace(/\u001B\[[0-9;]*m/g, '') // ANSI color codes
+      .replace(/\[1G/g, '')
+      .replace(/\u001B\[[0-9;]*m/g, '')
       .trim()
   }
 
@@ -300,6 +523,23 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   }
 
+  &__toggle {
+    margin-right: 8px;
+    background: rgba(255, 255, 255, 0.04);
+
+    .v-btn {
+      font-size: 11px !important;
+      text-transform: none;
+      letter-spacing: 0;
+      color: #8b949e;
+
+      &--active {
+        color: #c9d1d9 !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+      }
+    }
+  }
+
   &__dot {
     width: 10px;
     height: 10px;
@@ -321,6 +561,31 @@
     font-weight: 500;
     color: #8b949e;
     letter-spacing: 0.02em;
+  }
+
+  &__error-banner {
+    background: rgba(248, 81, 73, 0.1);
+    border-bottom: 1px solid rgba(248, 81, 73, 0.25);
+    padding: 10px 16px;
+    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    font-size: 12px;
+
+    &-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #f85149;
+      font-weight: 600;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+
+    &-line {
+      color: #f8857f;
+      padding: 2px 0 2px 22px;
+      word-break: break-word;
+      line-height: 1.5;
+    }
   }
 
   &__body {
@@ -357,6 +622,63 @@
     color: #484f58;
     padding: 8px 0;
     font-size: 12px;
+  }
+}
+
+.log-group {
+  margin: 2px 0;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0;
+    cursor: pointer;
+    user-select: none;
+    color: #58a6ff;
+    font-weight: 600;
+
+    &:hover {
+      color: #79c0ff;
+    }
+  }
+
+  &__chevron {
+    color: #484f58;
+    transition: transform 0.15s;
+
+    &--open {
+      transform: rotate(90deg);
+    }
+  }
+
+  &__step {
+    font-size: 12px;
+  }
+
+  &__count {
+    color: #484f58;
+    font-weight: 400;
+    font-size: 11px;
+    margin-left: auto;
+  }
+
+  &__error-badge {
+    background: rgba(248, 81, 73, 0.15);
+    color: #f85149;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  &__body {
+    padding-left: 18px;
+    border-left: 1px solid rgba(255, 255, 255, 0.06);
+    margin-left: 5px;
+    margin-bottom: 4px;
   }
 }
 
