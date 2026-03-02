@@ -24,9 +24,7 @@
     </v-tabs>
 
     <v-tabs-window v-model="activeTab">
-      <!-- ==================== ABA PROJETOS ==================== -->
       <v-tabs-window-item value="projects">
-        <!-- Filtros -->
         <v-chip-group v-model="filterSelection" class="mb-4" mandatory>
           <v-chip value="all">Todos</v-chip>
           <v-chip value="mine">Meus Projetos</v-chip>
@@ -64,7 +62,6 @@
               </v-card-subtitle>
 
               <v-card-text class="flex-grow-1">
-                <!-- Usernames do projeto -->
                 <div class="mb-2">
                   <span class="text-caption text-medium-emphasis"
                     >Membros:</span
@@ -114,7 +111,6 @@
             </v-card>
           </v-col>
 
-          <!-- Empty State -->
           <v-col v-if="filteredProjects.length === 0" cols="12">
             <v-card class="text-center pa-8">
               <v-icon class="mb-4" color="grey" size="64"
@@ -127,7 +123,6 @@
         </v-row>
       </v-tabs-window-item>
 
-      <!-- ==================== ABA USUÁRIOS ==================== -->
       <v-tabs-window-item value="users">
         <v-progress-linear v-if="usersLoading" indeterminate />
 
@@ -208,7 +203,6 @@
         </v-table>
       </v-tabs-window-item>
 
-      <!-- ==================== ABA ARMAZENAMENTO ==================== -->
       <v-tabs-window-item value="storage">
         <v-card>
           <v-card-title class="d-flex align-center">
@@ -317,18 +311,15 @@ const projectStore = useProjectStore();
 const activeTab = ref("projects");
 const filterSelection = ref("all");
 
-// Storage
 const storageUsage = ref<StorageUsageResponse | null>(null);
 const storageLoading = ref(false);
 const storageError = ref<string | null>(null);
 
-// Users
 const users = ref<User[]>([]);
 const usersLoading = ref(false);
 const userSearch = ref("");
 const togglingUserId = ref<number | null>(null);
 
-// Delete project
 const deleteDialog = ref(false);
 const projectToDelete = ref<Project | null>(null);
 const deleting = ref(false);
@@ -398,7 +389,6 @@ function getEmptyMessage() {
   return "Nenhum projeto no sistema";
 }
 
-// ---------- Delete Project ----------
 function confirmDeleteProject(project: Project) {
   projectToDelete.value = project;
   deleteDialog.value = true;
@@ -416,7 +406,6 @@ async function handleDeleteProject() {
   }
 }
 
-// ---------- Toggle User Active ----------
 async function handleToggleActive(user: User) {
   if (!user.id) return;
   togglingUserId.value = user.id;

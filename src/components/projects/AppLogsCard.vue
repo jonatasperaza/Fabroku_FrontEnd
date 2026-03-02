@@ -8,7 +8,6 @@
       @stop-stream="emit('stop-stream')"
       @stream-logs="(tid, afterId) => emit('stream-logs', tid, afterId)"
     />
-    <!-- Input de comando estilo terminal -->
     <div class="logs-console__prompt">
       <span v-if="running" class="logs-console__prompt-spinner">
         <v-progress-circular indeterminate size="14" width="2" />
@@ -23,7 +22,6 @@
         @keydown.enter="submitCommand"
       >
     </div>
-    <!-- Output do comando -->
     <div v-if="output" class="logs-console__output">
       <pre :class="success ? 'text-success' : 'text-error'">{{ output }}</pre>
       <v-btn

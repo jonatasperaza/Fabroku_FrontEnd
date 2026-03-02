@@ -39,7 +39,6 @@
         Parar
       </v-btn>
 
-      <!-- Botão Reiniciar -->
       <v-btn
         block
         class="mb-2"

@@ -9,7 +9,6 @@
       Voltar para Administração
     </v-btn>
 
-    <!-- Loading -->
     <v-progress-linear v-if="loading" indeterminate />
 
     <template v-if="projectStore.currentProject">
@@ -67,11 +66,9 @@
         <h2 class="text-h5">Apps deste Projeto</h2>
       </div>
 
-      <!-- Loading Apps -->
       <v-progress-linear v-if="appStore.loading" indeterminate />
 
       <v-row v-if="!appStore.loading">
-        <!-- Lista de apps do projeto -->
         <v-col v-for="app in projectApps" :key="app.id" cols="12" md="4">
           <v-card
             class="h-100"
@@ -116,7 +113,6 @@
           </v-card>
         </v-col>
 
-        <!-- Empty State -->
         <v-col v-if="projectApps.length === 0" cols="12">
           <v-card class="text-center pa-8">
             <v-icon class="mb-4" color="grey" size="64"
@@ -146,7 +142,6 @@ const appStore = useAppStore();
 
 const loading = ref(true);
 
-// Apps do projeto atual
 const projectApps = computed(() => appStore.apps);
 
 onMounted(async () => {
@@ -164,6 +159,4 @@ function formatDate(dateString?: string) {
   }
   return new Date(dateString).toLocaleDateString("pt-BR");
 }
-
-// Helpers importados de @/utils/status
 </script>

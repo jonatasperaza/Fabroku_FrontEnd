@@ -59,12 +59,9 @@ onMounted(async () => {
   }
 
   try {
-    // Com cookies httpOnly, o backend já setou os cookies
-    // Apenas verificamos se a autenticação funcionou
     const isAuthenticated = await authStore.checkAuth();
 
     if (isAuthenticated) {
-      // Redireciona para o dashboard
       router.push("/dashboard");
     } else {
       error.value = "Falha na autenticação. Tente novamente.";
