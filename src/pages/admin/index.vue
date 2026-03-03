@@ -143,9 +143,9 @@
             <tr>
               <th>Usuário</th>
               <th>Email</th>
-              <th>Entrou em</th>
-              <th>Último login</th>
-              <th class="text-center">Admin</th>
+              <th class="text-center">Tipo</th>
+              <th class="text-center">Apps</th>
+              <th class="text-center">Serviços</th>
               <th class="text-center">Status</th>
               <th class="text-center">Ações</th>
             </tr>
@@ -163,20 +163,34 @@
               <td>
                 <span class="text-caption">{{ u.email }}</span>
               </td>
-              <td>{{ formatDate(u.date_joined) }}</td>
-              <td>{{ u.last_login ? formatDate(u.last_login) : "Nunca" }}</td>
               <td class="text-center">
-                <v-icon
-                  v-if="u.is_superuser"
-                  color="warning"
-                  size="20"
-                >mdi-shield-crown</v-icon>
-                <v-icon
-                  v-else-if="u.is_fabric"
-                  color="info"
-                  size="20"
-                >mdi-account-hard-hat</v-icon>
-                <span v-else class="text-grey">-</span>
+                <v-chip v-if="u.is_superuser" color="warning" size="small" variant="tonal">
+                  <v-icon start size="14">mdi-shield-crown</v-icon>
+                  Admin
+                </v-chip>
+                <v-chip v-else-if="u.is_fabric" color="info" size="small" variant="tonal">
+                  <v-icon start size="14">mdi-account-hard-hat</v-icon>
+                  Fábrica
+                </v-chip>
+                <span v-else class="text-grey text-caption">Aluno</span>
+              </td>
+              <td class="text-center">
+                <v-chip
+                  :color="u.is_superuser ? 'grey' : getQuotaColor(u.apps_count, u.max_apps)"
+                  size="small"
+                  variant="tonal"
+                >
+                  {{ u.is_superuser ? '∞' : `${u.apps_count ?? 0}/${u.max_apps ?? '?'}` }}
+                </v-chip>
+              </td>
+              <td class="text-center">
+                <v-chip
+                  :color="u.is_superuser ? 'grey' : getQuotaColor(u.services_count, u.max_services)"
+                  size="small"
+                  variant="tonal"
+                >
+                  {{ u.is_superuser ? '∞' : `${u.services_count ?? 0}/${u.max_services ?? '?'}` }}
+                </v-chip>
               </td>
               <td class="text-center">
                 <v-chip :color="u.is_active ? 'success' : 'error'" size="small">
@@ -184,6 +198,17 @@
                 </v-chip>
               </td>
               <td class="text-center">
+                <v-btn
+                  class="mr-1"
+                  :disabled="u.is_superuser"
+                  icon
+                  size="small"
+                  variant="text"
+                  @click="openQuotaDialog(u)"
+                >
+                  <v-icon size="18">mdi-tune</v-icon>
+                  <v-tooltip activator="parent" location="top">Ajustar limites</v-tooltip>
+                </v-btn>
                 <v-btn
                   :color="u.is_active ? 'error' : 'success'"
                   :disabled="u.is_superuser"
@@ -298,6 +323,69 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Dialog de edição de quota -->
+    <v-dialog v-model="quotaDialog" max-width="450">
+      <v-card>
+        <v-card-title class="d-flex align-center">
+          <v-icon class="mr-2" color="primary">mdi-tune</v-icon>
+          Limites de {{ quotaUser?.name || quotaUser?.email }}
+        </v-card-title>
+        <v-card-text>
+          <p class="text-caption text-medium-emphasis mb-4">
+            Defina limites personalizados. Deixe vazio para usar o padrão
+            ({{ quotaUser?.is_fabric ? '5 apps / 3 serviços - Fábrica' : '3 apps / 2 serviços - Aluno' }}).
+          </p>
+
+          <v-text-field
+            v-model.number="quotaForm.max_apps"
+            clearable
+            density="compact"
+            hint="Padrão depende do tipo de usuário"
+            label="Limite de Apps"
+            min="0"
+            persistent-hint
+            type="number"
+            variant="outlined"
+          />
+
+          <v-text-field
+            v-model.number="quotaForm.max_services"
+            class="mt-3"
+            clearable
+            density="compact"
+            hint="Padrão depende do tipo de usuário"
+            label="Limite de Serviços"
+            min="0"
+            persistent-hint
+            type="number"
+            variant="outlined"
+          />
+
+          <v-alert
+            v-if="quotaUser"
+            class="mt-3"
+            density="compact"
+            type="info"
+            variant="tonal"
+          >
+            Uso atual: {{ quotaUser.apps_count ?? 0 }} apps, {{ quotaUser.services_count ?? 0 }} serviços
+          </v-alert>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="quotaDialog = false">Cancelar</v-btn>
+          <v-btn
+            color="primary"
+            :loading="quotaSaving"
+            variant="elevated"
+            @click="handleSaveQuota"
+          >
+            Salvar
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -327,6 +415,15 @@
   const deleteDialog = ref(false)
   const projectToDelete = ref<Project | null>(null)
   const deleting = ref(false)
+
+  // Quota dialog
+  const quotaDialog = ref(false)
+  const quotaUser = ref<User | null>(null)
+  const quotaForm = ref<{ max_apps: number | null; max_services: number | null }>({
+    max_apps: null,
+    max_services: null,
+  })
+  const quotaSaving = ref(false)
 
   async function fetchStorageUsage () {
     storageLoading.value = true
@@ -419,6 +516,39 @@
       if (idx !== -1) users.value[idx] = updated
     } finally {
       togglingUserId.value = null
+    }
+  }
+
+  function getQuotaColor (current?: number, max?: number | null): string {
+    if (max == null || current == null) return 'grey'
+    const ratio = current / max
+    if (ratio >= 1) return 'error'
+    if (ratio >= 0.8) return 'warning'
+    return 'success'
+  }
+
+  function openQuotaDialog (user: User) {
+    quotaUser.value = user
+    quotaForm.value = {
+      max_apps: user.custom_max_apps ?? null,
+      max_services: user.custom_max_services ?? null,
+    }
+    quotaDialog.value = true
+  }
+
+  async function handleSaveQuota () {
+    if (!quotaUser.value?.id) return
+    quotaSaving.value = true
+    try {
+      const updated = await UsersService.setQuota(quotaUser.value.id, {
+        max_apps: quotaForm.value.max_apps,
+        max_services: quotaForm.value.max_services,
+      })
+      const idx = users.value.findIndex(u => u.id === quotaUser.value?.id)
+      if (idx !== -1) users.value[idx] = updated
+      quotaDialog.value = false
+    } finally {
+      quotaSaving.value = false
     }
   }
 </script>

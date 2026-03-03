@@ -26,6 +26,26 @@ class UsersService {
     )
     return response.data
   }
+
+  async setQuota (id: number, quota: { max_apps?: number | null; max_services?: number | null }): Promise<User> {
+    const response = await apiClient.post<User>(
+      `/auth/users/${id}/set_quota/`,
+      quota,
+    )
+    return response.data
+  }
+
+  async getMyQuota (): Promise<{
+    max_apps: number | null
+    max_services: number | null
+    apps_count: number
+    services_count: number
+    can_create_app: boolean
+    can_create_service: boolean
+  }> {
+    const response = await apiClient.get('/auth/users/my_quota/')
+    return response.data
+  }
 }
 
 export default new UsersService()

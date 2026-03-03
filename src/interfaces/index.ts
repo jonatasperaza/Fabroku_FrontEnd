@@ -16,6 +16,12 @@ interface User {
   is_active?: boolean
   date_joined?: string
   last_login?: string | null
+  max_apps?: number | null
+  max_services?: number | null
+  apps_count?: number
+  services_count?: number
+  custom_max_apps?: number | null
+  custom_max_services?: number | null
 }
 
 interface ProjectUser {

@@ -416,6 +416,17 @@
             </v-card-text>
             <v-divider />
             <v-card-text class="pa-5">
+              <v-alert
+                v-if="quotaError"
+                class="mb-3"
+                closable
+                density="compact"
+                type="error"
+                variant="tonal"
+                @click:close="quotaError = ''"
+              >
+                {{ quotaError }}
+              </v-alert>
               <v-btn
                 block
                 color="primary"
@@ -525,6 +536,7 @@ PORT=3000"
 <script setup lang="ts">
   import type { GitRepo } from '@/interfaces'
 
+  import axios from 'axios'
   import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
 
@@ -551,6 +563,7 @@ PORT=3000"
 
   const sourceMode = ref<'github' | 'manual'>('github')
   const creating = ref(false)
+  const quotaError = ref('')
   const customDokkuName = ref('')
   const newApp = ref({ name: '', git: '', branch: '' })
   const selectedRepo = ref<GitRepo | null>(null)
@@ -870,7 +883,12 @@ PORT=3000"
         router.push(`/projects/${projectId}`)
       }
     } catch (error_) {
-      console.error('Erro ao criar app:', error_)
+      if (axios.isAxiosError(error_) && error_.response?.data?.quota) {
+        const data = error_.response.data
+        quotaError.value = `Limite de apps atingido: você possui ${data.current} de ${data.limit} apps permitidos.`
+      } else {
+        console.error('Erro ao criar app:', error_)
+      }
     } finally {
       creating.value = false
     }

@@ -6,6 +6,73 @@
 
     <v-progress-linear v-if="loading" class="mb-4" indeterminate />
 
+    <!-- Quota Usage Cards -->
+    <v-row v-if="quota" class="mb-4">
+      <v-col cols="12" md="6">
+        <v-card>
+          <v-card-text>
+            <div class="d-flex align-center justify-space-between mb-2">
+              <div class="d-flex align-center">
+                <v-icon class="mr-2" color="primary">mdi-application</v-icon>
+                <span class="text-subtitle-1 font-weight-medium">Apps</span>
+              </div>
+              <v-chip
+                :color="quota.max_apps == null ? 'grey' : getQuotaColor(quota.apps_count, quota.max_apps)"
+                size="small"
+                variant="tonal"
+              >
+                {{ quota.max_apps == null ? `${quota.apps_count} / ∞` : `${quota.apps_count} / ${quota.max_apps}` }}
+              </v-chip>
+            </div>
+            <v-progress-linear
+              v-if="quota.max_apps != null"
+              :color="getQuotaColor(quota.apps_count, quota.max_apps)"
+              :model-value="(quota.apps_count / quota.max_apps) * 100"
+              rounded
+            />
+            <v-progress-linear
+              v-else
+              color="grey"
+              :model-value="0"
+              rounded
+            />
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" md="6">
+        <v-card>
+          <v-card-text>
+            <div class="d-flex align-center justify-space-between mb-2">
+              <div class="d-flex align-center">
+                <v-icon class="mr-2" color="secondary">mdi-database</v-icon>
+                <span class="text-subtitle-1 font-weight-medium">Serviços</span>
+              </div>
+              <v-chip
+                :color="quota.max_services == null ? 'grey' : getQuotaColor(quota.services_count, quota.max_services)"
+                size="small"
+                variant="tonal"
+              >
+                {{ quota.max_services == null ? `${quota.services_count} / ∞` : `${quota.services_count} / ${quota.max_services}` }}
+              </v-chip>
+            </div>
+            <v-progress-linear
+              v-if="quota.max_services != null"
+              :color="getQuotaColor(quota.services_count, quota.max_services)"
+              :model-value="(quota.services_count / quota.max_services) * 100"
+              rounded
+            />
+            <v-progress-linear
+              v-else
+              color="grey"
+              :model-value="0"
+              rounded
+            />
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+
     <v-row>
       <!-- Projetos Recentes -->
       <v-col cols="12" md="6">
@@ -94,6 +161,7 @@
   import { useRouter } from 'vue-router'
 
   import RepoSelector from '@/components/git/RepoSelector.vue'
+  import UsersService from '@/services/users'
   import { useAppStore, useProjectStore } from '@/stores'
   import { formatStatus, getStatusColor, getStatusIcon } from '@/utils/status'
 
@@ -103,6 +171,15 @@
 
   const loading = ref(true)
   const showRepos = ref(false)
+
+  const quota = ref<{
+    max_apps: number | null
+    max_services: number | null
+    apps_count: number
+    services_count: number
+    can_create_app: boolean
+    can_create_service: boolean
+  } | null>(null)
 
   const stats = computed(() => ({
     projects: projectStore.projects.length,
@@ -133,11 +210,25 @@
 
   onMounted(async () => {
     try {
-      await Promise.all([projectStore.fetchProjects(), appStore.fetchApps()])
+      await Promise.all([
+        projectStore.fetchProjects(),
+        appStore.fetchApps(),
+        UsersService.getMyQuota().then(q => {
+          quota.value = q
+        }).catch(() => {}),
+      ])
     } finally {
       loading.value = false
     }
   })
+
+  function getQuotaColor (current: number, max: number | null): string {
+    if (max == null) return 'grey'
+    const ratio = current / max
+    if (ratio >= 1) return 'error'
+    if (ratio >= 0.8) return 'warning'
+    return 'success'
+  }
 
   function formatDate (dateString?: string) {
     if (!dateString) {
