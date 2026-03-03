@@ -63,7 +63,11 @@
     <div v-if="errorSummary.length > 0" class="log-terminal__error-banner">
       <div class="log-terminal__error-banner-header">
         <v-icon color="error" size="16">mdi-alert-circle</v-icon>
-        <span>{{ errorSummary.length === 1 ? 'Erro detectado' : `${errorSummary.length} erros detectados` }}</span>
+        <span>{{
+          errorSummary.length === 1
+            ? "Erro detectado"
+            : `${errorSummary.length} erros detectados`
+        }}</span>
       </div>
       <div
         v-for="(err, idx) in errorSummary"
@@ -147,7 +151,8 @@
   const streamInterval = ref<number | null>(null)
   const expanded = ref(false)
 
-  const ERROR_PATTERNS = /\berror\b|failed|fatal|denied|cannot|couldn't|could not|exception/i
+  const ERROR_PATTERNS
+    = /\berror\b|failed|fatal|denied|cannot|couldn't|could not|exception/i
   const WARNING_PATTERNS = /\bwarning\b|! Warning/i
 
   function isErrorLine (text: string): boolean {
@@ -214,7 +219,8 @@
           const trimmed = sub.trim()
           if (!trimmed) continue
 
-          const isStep = trimmed.startsWith('----->') || trimmed.startsWith('=====>')
+          const isStep
+            = trimmed.startsWith('----->') || trimmed.startsWith('=====>')
           const isErr = isErrorLine(trimmed)
           const isWarn = isWarningLine(trimmed)
 
@@ -313,10 +319,21 @@
   }
 
   function cleanMessage (msg: string): string {
-    return msg
-      .replace(/\[1G/g, '')
-      .replace(/\u001B\[[0-9;]*m/g, '')
-      .trim()
+    return (
+      msg
+        // Remove todas as sequências ANSI CSI (cores, cursor, erase, etc.)
+        .replace(/\u001B\[[0-9;]*[A-Za-z]/g, '')
+        // Remove sequências ANSI OSC (títulos de janela, etc.)
+        .replace(/\u001B\].*?(?:\u0007|\u001B\\)/g, '')
+        // Remove caracteres ESC soltos que sobraram
+        .replace(/\u001B/g, '')
+        // Remove carriage return
+        .replace(/\r/g, '')
+        // Remove outros caracteres de controle (exceto \n e \t)
+
+        .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
+        .trim()
+    )
   }
 
   function scrollToBottom () {
@@ -523,6 +540,5 @@
     font-weight: 600;
     margin-top: 4px;
   }
-
 }
 </style>

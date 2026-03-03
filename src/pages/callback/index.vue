@@ -4,77 +4,77 @@ meta:
 </route>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
-import { useRouter } from "vue-router";
-import { useAuthStore } from "@/stores";
+  import { onMounted, ref } from 'vue'
+  import { useRouter } from 'vue-router'
+  import { useAuthStore } from '@/stores'
 
-const router = useRouter();
-const authStore = useAuthStore();
-const error = ref<string | null>(null);
-const loading = ref(true);
+  const router = useRouter()
+  const authStore = useAuthStore()
+  const error = ref<string | null>(null)
+  const loading = ref(true)
 
-const errorCode = ref<string | null>(null);
+  const errorCode = ref<string | null>(null)
 
-function getDefaultErrorMessage(errorCode: string): string {
-  const errorMessages: Record<string, string> = {
-    auth_failed: "Falha ao obter token de acesso do GitHub.",
-    user_info_failed: "Falha ao obter informações do usuário do GitHub.",
-    email_failed: "Falha ao obter email do usuário do GitHub.",
-    invalid_email: "O email do usuário não é válido.",
-    user_disabled:
-      "Sua conta foi desabilitada pelo administrador. Entre em contato com o suporte.",
-    unexpected_error: "Erro inesperado durante a autenticação.",
-  };
-  return errorMessages[errorCode] || "Erro desconhecido na autenticação.";
-}
-
-function getErrorIcon(code: string | null): string {
-  const icons: Record<string, string> = {
-    user_disabled: "mdi-account-lock",
-    invalid_email: "mdi-email-off",
-    auth_failed: "mdi-key-remove",
-    user_info_failed: "mdi-account-alert",
-    email_failed: "mdi-email-alert",
-  };
-  return icons[code || ""] || "mdi-alert-circle";
-}
-
-function getErrorColor(code: string | null): string {
-  if (code === "user_disabled") return "warning";
-  return "error";
-}
-
-onMounted(async () => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const errorParam = urlParams.get("error");
-  const messageParam = urlParams.get("message");
-
-  if (errorParam) {
-    errorCode.value = errorParam;
-    error.value = messageParam
-      ? decodeURIComponent(messageParam)
-      : getDefaultErrorMessage(errorParam);
-    loading.value = false;
-    return;
-  }
-
-  try {
-    const isAuthenticated = await authStore.checkAuth();
-
-    if (isAuthenticated) {
-      router.push("/dashboard");
-    } else {
-      error.value = "Falha na autenticação. Tente novamente.";
-      loading.value = false;
+  function getDefaultErrorMessage (errorCode: string): string {
+    const errorMessages: Record<string, string> = {
+      auth_failed: 'Falha ao obter token de acesso do GitHub.',
+      user_info_failed: 'Falha ao obter informações do usuário do GitHub.',
+      email_failed: 'Falha ao obter email do usuário do GitHub.',
+      invalid_email: 'O email do usuário não é válido.',
+      user_disabled:
+        'Sua conta foi desabilitada pelo administrador. Entre em contato com o suporte.',
+      unexpected_error: 'Erro inesperado durante a autenticação.',
     }
-  } catch (error_) {
-    error.value =
-      error_ instanceof Error
-        ? error_.message
-        : "Erro ao processar autenticação";
-    loading.value = false;
+    return errorMessages[errorCode] || 'Erro desconhecido na autenticação.'
   }
-});
+
+  function getErrorIcon (code: string | null): string {
+    const icons: Record<string, string> = {
+      user_disabled: 'mdi-account-lock',
+      invalid_email: 'mdi-email-off',
+      auth_failed: 'mdi-key-remove',
+      user_info_failed: 'mdi-account-alert',
+      email_failed: 'mdi-email-alert',
+    }
+    return icons[code || ''] || 'mdi-alert-circle'
+  }
+
+  function getErrorColor (code: string | null): string {
+    if (code === 'user_disabled') return 'warning'
+    return 'error'
+  }
+
+  onMounted(async () => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const errorParam = urlParams.get('error')
+    const messageParam = urlParams.get('message')
+
+    if (errorParam) {
+      errorCode.value = errorParam
+      error.value = messageParam
+        ? decodeURIComponent(messageParam)
+        : getDefaultErrorMessage(errorParam)
+      loading.value = false
+      return
+    }
+
+    try {
+      const isAuthenticated = await authStore.checkAuth()
+
+      if (isAuthenticated) {
+        router.push('/dashboard')
+      } else {
+        error.value = 'Falha na autenticação. Tente novamente.'
+        loading.value = false
+      }
+    } catch (error_) {
+      error.value
+        = error_ instanceof Error
+          ? error_.message
+          : 'Erro ao processar autenticação'
+      loading.value = false
+    }
+  })
 </script>
 
 <template>

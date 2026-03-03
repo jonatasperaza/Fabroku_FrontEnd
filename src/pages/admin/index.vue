@@ -63,9 +63,7 @@
 
               <v-card-text class="flex-grow-1">
                 <div class="mb-2">
-                  <span class="text-caption text-medium-emphasis"
-                    >Membros:</span
-                  >
+                  <span class="text-caption text-medium-emphasis">Membros:</span>
                   <div class="d-flex flex-wrap ga-1 mt-1">
                     <v-chip
                       v-for="u in project.users_detail || []"
@@ -103,9 +101,10 @@
                   @click.stop="confirmDeleteProject(project)"
                 >
                   <v-icon>mdi-delete</v-icon>
-                  <v-tooltip activator="parent" location="top"
-                    >Apagar projeto</v-tooltip
-                  >
+                  <v-tooltip
+                    activator="parent"
+                    location="top"
+                  >Apagar projeto</v-tooltip>
                 </v-btn>
               </v-card-actions>
             </v-card>
@@ -113,9 +112,11 @@
 
           <v-col v-if="filteredProjects.length === 0" cols="12">
             <v-card class="text-center pa-8">
-              <v-icon class="mb-4" color="grey" size="64"
-                >mdi-folder-outline</v-icon
-              >
+              <v-icon
+                class="mb-4"
+                color="grey"
+                size="64"
+              >mdi-folder-outline</v-icon>
               <h3 class="text-h6 mb-2">Nenhum projeto encontrado</h3>
               <p class="text-grey">{{ getEmptyMessage() }}</p>
             </v-card>
@@ -165,12 +166,16 @@
               <td>{{ formatDate(u.date_joined) }}</td>
               <td>{{ u.last_login ? formatDate(u.last_login) : "Nunca" }}</td>
               <td class="text-center">
-                <v-icon v-if="u.is_superuser" color="warning" size="20"
-                  >mdi-shield-crown</v-icon
-                >
-                <v-icon v-else-if="u.is_fabric" color="info" size="20"
-                  >mdi-account-hard-hat</v-icon
-                >
+                <v-icon
+                  v-if="u.is_superuser"
+                  color="warning"
+                  size="20"
+                >mdi-shield-crown</v-icon>
+                <v-icon
+                  v-else-if="u.is_fabric"
+                  color="info"
+                  size="20"
+                >mdi-account-hard-hat</v-icon>
                 <span v-else class="text-grey">-</span>
               </td>
               <td class="text-center">
@@ -272,8 +277,7 @@
         <v-card-text>
           <p>
             Tem certeza que deseja apagar o projeto
-            <strong>{{ projectToDelete?.name }}</strong
-            >?
+            <strong>{{ projectToDelete?.name }}</strong>?
           </p>
           <p class="text-error text-caption mt-2">
             Esta ação não pode ser desfeita. Todos os apps e serviços associados
@@ -298,123 +302,123 @@
 </template>
 
 <script setup lang="ts">
-import type { Project, User } from "@/interfaces";
-import type { StorageUsageResponse } from "@/services/admin";
+  import type { Project, User } from '@/interfaces'
+  import type { StorageUsageResponse } from '@/services/admin'
 
-import { computed, onMounted, ref } from "vue";
+  import { computed, onMounted, ref } from 'vue'
 
-import AdminService from "@/services/admin";
-import UsersService from "@/services/users";
-import { useProjectStore } from "@/stores";
+  import AdminService from '@/services/admin'
+  import UsersService from '@/services/users'
+  import { useProjectStore } from '@/stores'
 
-const projectStore = useProjectStore();
-const activeTab = ref("projects");
-const filterSelection = ref("all");
+  const projectStore = useProjectStore()
+  const activeTab = ref('projects')
+  const filterSelection = ref('all')
 
-const storageUsage = ref<StorageUsageResponse | null>(null);
-const storageLoading = ref(false);
-const storageError = ref<string | null>(null);
+  const storageUsage = ref<StorageUsageResponse | null>(null)
+  const storageLoading = ref(false)
+  const storageError = ref<string | null>(null)
 
-const users = ref<User[]>([]);
-const usersLoading = ref(false);
-const userSearch = ref("");
-const togglingUserId = ref<number | null>(null);
+  const users = ref<User[]>([])
+  const usersLoading = ref(false)
+  const userSearch = ref('')
+  const togglingUserId = ref<number | null>(null)
 
-const deleteDialog = ref(false);
-const projectToDelete = ref<Project | null>(null);
-const deleting = ref(false);
+  const deleteDialog = ref(false)
+  const projectToDelete = ref<Project | null>(null)
+  const deleting = ref(false)
 
-async function fetchStorageUsage() {
-  storageLoading.value = true;
-  storageError.value = null;
-  try {
-    storageUsage.value = await AdminService.getStorageUsage();
-  } catch (error) {
-    storageError.value =
-      error instanceof Error ? error.message : "Erro ao carregar uso de espaço";
-  } finally {
-    storageLoading.value = false;
+  async function fetchStorageUsage () {
+    storageLoading.value = true
+    storageError.value = null
+    try {
+      storageUsage.value = await AdminService.getStorageUsage()
+    } catch (error) {
+      storageError.value
+        = error instanceof Error ? error.message : 'Erro ao carregar uso de espaço'
+    } finally {
+      storageLoading.value = false
+    }
   }
-}
 
-async function fetchUsers() {
-  usersLoading.value = true;
-  try {
-    users.value = await UsersService.getAdminList();
-  } catch {
-    users.value = [];
-  } finally {
-    usersLoading.value = false;
+  async function fetchUsers () {
+    usersLoading.value = true
+    try {
+      users.value = await UsersService.getAdminList()
+    } catch {
+      users.value = []
+    } finally {
+      usersLoading.value = false
+    }
   }
-}
 
-onMounted(() => {
-  projectStore.fetchProjects();
-  fetchStorageUsage();
-  fetchUsers();
-});
+  onMounted(() => {
+    projectStore.fetchProjects()
+    fetchStorageUsage()
+    fetchUsers()
+  })
 
-const filteredProjects = computed(() => {
-  if (filterSelection.value === "mine") {
-    return projectStore.projects.filter((p) => p.is_owner);
+  const filteredProjects = computed(() => {
+    if (filterSelection.value === 'mine') {
+      return projectStore.projects.filter(p => p.is_owner)
+    }
+    if (filterSelection.value === 'others') {
+      return projectStore.projects.filter(p => !p.is_owner)
+    }
+    return projectStore.projects
+  })
+
+  const filteredUsers = computed(() => {
+    if (!userSearch.value) return users.value
+    const q = userSearch.value.toLowerCase()
+    return users.value.filter(
+      u =>
+        (u.name || '').toLowerCase().includes(q)
+        || u.email.toLowerCase().includes(q),
+    )
+  })
+
+  function formatDate (dateString?: string) {
+    if (!dateString) return '-'
+    return new Date(dateString).toLocaleDateString('pt-BR')
   }
-  if (filterSelection.value === "others") {
-    return projectStore.projects.filter((p) => !p.is_owner);
+
+  function getEmptyMessage () {
+    if (filterSelection.value === 'mine') {
+      return 'Você não possui projetos'
+    }
+    if (filterSelection.value === 'others') {
+      return 'Não há projetos de outros usuários'
+    }
+    return 'Nenhum projeto no sistema'
   }
-  return projectStore.projects;
-});
 
-const filteredUsers = computed(() => {
-  if (!userSearch.value) return users.value;
-  const q = userSearch.value.toLowerCase();
-  return users.value.filter(
-    (u) =>
-      (u.name || "").toLowerCase().includes(q) ||
-      u.email.toLowerCase().includes(q),
-  );
-});
-
-function formatDate(dateString?: string) {
-  if (!dateString) return "-";
-  return new Date(dateString).toLocaleDateString("pt-BR");
-}
-
-function getEmptyMessage() {
-  if (filterSelection.value === "mine") {
-    return "Você não possui projetos";
+  function confirmDeleteProject (project: Project) {
+    projectToDelete.value = project
+    deleteDialog.value = true
   }
-  if (filterSelection.value === "others") {
-    return "Não há projetos de outros usuários";
-  }
-  return "Nenhum projeto no sistema";
-}
 
-function confirmDeleteProject(project: Project) {
-  projectToDelete.value = project;
-  deleteDialog.value = true;
-}
-
-async function handleDeleteProject() {
-  if (!projectToDelete.value?.id) return;
-  deleting.value = true;
-  try {
-    await projectStore.deleteProject(projectToDelete.value.id);
-    deleteDialog.value = false;
-    projectToDelete.value = null;
-  } finally {
-    deleting.value = false;
+  async function handleDeleteProject () {
+    if (!projectToDelete.value?.id) return
+    deleting.value = true
+    try {
+      await projectStore.deleteProject(projectToDelete.value.id)
+      deleteDialog.value = false
+      projectToDelete.value = null
+    } finally {
+      deleting.value = false
+    }
   }
-}
 
-async function handleToggleActive(user: User) {
-  if (!user.id) return;
-  togglingUserId.value = user.id;
-  try {
-    const updated = await UsersService.toggleActive(user.id);
-    const idx = users.value.findIndex((u) => u.id === user.id);
-    if (idx !== -1) users.value[idx] = updated;
-  } finally {
-    togglingUserId.value = null;
+  async function handleToggleActive (user: User) {
+    if (!user.id) return
+    togglingUserId.value = user.id
+    try {
+      const updated = await UsersService.toggleActive(user.id)
+      const idx = users.value.findIndex(u => u.id === user.id)
+      if (idx !== -1) users.value[idx] = updated
+    } finally {
+      togglingUserId.value = null
+    }
   }
-}
 </script>
