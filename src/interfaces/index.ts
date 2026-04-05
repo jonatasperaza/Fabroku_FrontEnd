@@ -66,6 +66,7 @@ interface App {
   name_dokku?: string | null
   is_owner?: boolean
   services?: Service[]
+  last_commit_sha?: string
 }
 
 interface Service {

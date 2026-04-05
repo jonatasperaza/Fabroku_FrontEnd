@@ -136,7 +136,11 @@
               </template>
               <v-list-item-title>{{ app.name }}</v-list-item-title>
               <v-list-item-subtitle>
-                {{ app.git }}
+                {{ formatGitUrl(app.git) }}
+              </v-list-item-subtitle>
+              <v-list-item-subtitle v-if="app.last_commit_sha" class="text-caption">
+                <v-icon size="12" class="mr-1" color="primary">mdi-source-commit</v-icon>
+                {{ app.last_commit_sha.slice(0, 7) }}
               </v-list-item-subtitle>
               <template #append>
                 <v-chip :color="getStatusColor(app.status)" size="x-small">
@@ -243,6 +247,12 @@
       return '-'
     }
     return new Date(dateString).toLocaleDateString('pt-BR')
+  }
+
+  function formatGitUrl (url?: string) {
+    if (!url) return '-'
+    const match = url.match(/github\.com[/:]([^/]+\/[^/]+?)(?:\.git)?$/)
+    return match ? match[1] : url
   }
 
   // Helpers importados de @/utils/status

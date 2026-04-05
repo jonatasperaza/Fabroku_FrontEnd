@@ -23,6 +23,20 @@
           <v-list-item-subtitle>{{ app.branch }}</v-list-item-subtitle>
         </v-list-item>
 
+        <v-list-item>
+          <template #prepend>
+            <v-icon color="primary">mdi-source-commit</v-icon>
+          </template>
+          <v-list-item-title>Último Commit</v-list-item-title>
+          <v-list-item-subtitle>
+            <span v-if="lastCommit">{{ lastCommit.sha_short }} — {{ lastCommit.message.split('\n')[0] }}</span>
+            <span v-else-if="app.last_commit_sha">
+              {{ app.last_commit_sha.slice(0, 7) }}
+            </span>
+            <span v-else>Nenhum deploy ainda</span>
+          </v-list-item-subtitle>
+        </v-list-item>
+
         <v-list-item v-if="app.domain">
           <template #prepend>
             <v-icon>mdi-web</v-icon>
@@ -71,9 +85,27 @@
 <script setup lang="ts">
   import type { App } from '@/interfaces'
 
-  defineProps<{
+  import { onMounted, ref } from 'vue'
+
+  import apiClient from '@/plugins/axios'
+
+  const props = defineProps<{
     app: App
   }>()
+
+  const lastCommit = ref<{ sha: string, sha_short: string, message: string, author: string, date: string, url: string } | null>(null)
+
+  onMounted(async () => {
+    if (!props.app.id) return
+    try {
+      const response = await apiClient.get(`/apps/apps/${props.app.id}/last_commit/`)
+      if (response.data && !response.data.error) {
+        lastCommit.value = response.data
+      }
+    } catch {
+      // Silently fail — commit info is supplementary
+    }
+  })
 
   function formatDate (dateString?: string) {
     if (!dateString) return '-'
