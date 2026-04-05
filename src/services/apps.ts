@@ -35,8 +35,9 @@ class AppsService {
     return response.data
   }
 
-  async deleteApp (id: string): Promise<void> {
-    await apiClient.delete(`/apps/apps/${id}/`)
+  async deleteApp (id: string): Promise<{ status: string, message: string, task_id: string }> {
+    const response = await apiClient.delete(`/apps/apps/${id}/`)
+    return response.data
   }
 
   async getAppStatus (id: string): Promise<TaskStatus> {

@@ -95,11 +95,10 @@ export const useAppStore = defineStore('app', () => {
     loading.value = true
     error.value = null
     try {
-      await AppsService.deleteApp(appId)
-      apps.value = apps.value.filter(a => String(a.id) !== appId)
-      if (String(currentApp.value?.id) === appId) {
-        currentApp.value = null
-      }
+      const result = await AppsService.deleteApp(appId)
+      // Não remove da lista nem limpa currentApp imediatamente
+      // para o usuário acompanhar o progresso nos logs
+      return result
     } catch (error_) {
       error.value = 'Erro ao deletar app'
       console.error('Erro ao deletar app:', error_)

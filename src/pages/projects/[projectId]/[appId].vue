@@ -443,6 +443,12 @@ async function pollTaskStatus() {
     if (status?.state === "SUCCESS" || status?.state === "FAILURE") {
       stopTaskPolling();
       await appStore.fetchApp(appId);
+      // Se era delete, navegar de volta após concluir
+      if (appStore.currentApp?.status === "DELETING" && status?.state === "SUCCESS") {
+        // App foi deletado
+        stopLogStream();
+        router.push(`/projects/${projectId}`);
+      }
     }
   } catch (error_) {
     console.error("Erro ao buscar status da task:", error_);
@@ -499,8 +505,17 @@ async function removeEnvVar(key: string) {
 async function handleDeleteApp() {
   deleting.value = true;
   try {
-    await appStore.deleteApp(appId);
-    router.push(`/projects/${projectId}`);
+    const result = await appStore.deleteApp(appId);
+    if (appStore.currentApp) {
+      appStore.currentApp.task_id = result.task_id;
+      appStore.currentApp.status = 'DELETING';
+      await startLogStreamIfNeeded();
+      startTaskPollingIfNeeded();
+    }
+    // Não navega imediatamente — deixa o usuário acompanhar o progresso nos logs
+    // A navegação ocorre quando o watch detectar status 'RUNNING' ou 'SUCCESS'
+  } catch (error_) {
+    console.error("Erro ao deletar app:", error_);
   } finally {
     deleting.value = false;
   }
@@ -509,8 +524,13 @@ async function handleDeleteApp() {
 async function handleStartApp() {
   starting.value = true;
   try {
-    await appStore.startApp(appId);
-    await appStore.fetchApp(appId);
+    const result = await appStore.startApp(appId);
+    if (appStore.currentApp && result.task_id) {
+      appStore.currentApp.task_id = result.task_id;
+      appStore.currentApp.status = 'STARTING';
+    }
+    await startLogStreamIfNeeded();
+    startTaskPollingIfNeeded();
   } catch (error_) {
     console.error("Erro ao iniciar app:", error_);
   } finally {
@@ -533,8 +553,13 @@ async function handleStopApp() {
 async function handleRestartApp() {
   restarting.value = true;
   try {
-    await appStore.restartApp(appId);
-    await appStore.fetchApp(appId);
+    const result = await appStore.restartApp(appId);
+    if (appStore.currentApp && result.task_id) {
+      appStore.currentApp.task_id = result.task_id;
+      appStore.currentApp.status = 'STARTING';
+    }
+    await startLogStreamIfNeeded();
+    startTaskPollingIfNeeded();
   } catch (error_) {
     console.error("Erro ao reiniciar app:", error_);
   } finally {
@@ -550,6 +575,7 @@ async function handleRedeployApp() {
       appStore.currentApp.task_id = result.task_id;
       appStore.currentApp.status = 'DEPLOYING';
     }
+    await startLogStreamIfNeeded();
     startTaskPollingIfNeeded();
   } catch (error_) {
     console.error("Erro ao fazer redeploy:", error_);
