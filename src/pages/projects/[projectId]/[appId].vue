@@ -119,12 +119,14 @@
             :app-name="appStore.currentApp.name"
             :deleting="deleting"
             :domain="appStore.currentApp.domain"
+            :redeploying="redeploying"
             :restarting="restarting"
             :starting="starting"
             :status="appStore.currentApp.status"
             :stopping="stopping"
             @delete="handleDeleteApp"
             @diagnose="diagnoseAppError"
+            @redeploy="handleRedeployApp"
             @restart="handleRestartApp"
             @start="handleStartApp"
             @stop="handleStopApp"
@@ -264,6 +266,7 @@ const deleting = ref(false);
 const starting = ref(false);
 const stopping = ref(false);
 const restarting = ref(false);
+const redeploying = ref(false);
 const taskPollingInterval = ref<ReturnType<typeof setInterval> | null>(null);
 
 // Estado do banco de dados
@@ -536,6 +539,22 @@ async function handleRestartApp() {
     console.error("Erro ao reiniciar app:", error_);
   } finally {
     restarting.value = false;
+  }
+}
+
+async function handleRedeployApp() {
+  redeploying.value = true;
+  try {
+    const result = await AppsService.redeployApp(appId);
+    if (appStore.currentApp) {
+      appStore.currentApp.task_id = result.task_id;
+      appStore.currentApp.status = 'DEPLOYING';
+    }
+    startTaskPollingIfNeeded();
+  } catch (error_) {
+    console.error("Erro ao fazer redeploy:", error_);
+  } finally {
+    redeploying.value = false;
   }
 }
 

@@ -59,6 +59,11 @@ class AppsService {
     return response.data
   }
 
+  async redeployApp (id: string, commit?: string): Promise<{ status: string, message: string, task_id: string }> {
+    const response = await apiClient.post(`/apps/apps/${id}/redeploy/`, { commit })
+    return response.data
+  }
+
   async runCommand (
     id: string,
     command: string,

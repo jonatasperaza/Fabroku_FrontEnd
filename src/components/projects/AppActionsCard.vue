@@ -51,6 +51,18 @@
         Reiniciar
       </v-btn>
 
+      <v-btn
+        block
+        class="mb-2"
+        color="deep-purple"
+        :disabled="status === 'DELETING' || status === 'DEPLOYING' || status === 'STARTING'"
+        :loading="redeploying"
+        prepend-icon="mdi-cloud-upload"
+        @click="emit('redeploy')"
+      >
+        Redeploy
+      </v-btn>
+
       <!-- Botão Diagnosticar (só quando há erro) -->
       <v-btn
         v-if="status === 'ERROR' || status === 'FAILED'"
@@ -147,12 +159,14 @@
     stopping?: boolean
     restarting?: boolean
     deleting?: boolean
+    redeploying?: boolean
   }>()
 
   const emit = defineEmits<{
     start: []
     stop: []
     restart: []
+    redeploy: []
     delete: []
     diagnose: []
   }>()
