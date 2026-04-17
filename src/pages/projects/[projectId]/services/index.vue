@@ -85,6 +85,15 @@
               >
                 Excluir
               </v-btn>
+              <v-btn
+                v-if="service.app"
+                color="warning"
+                size="small"
+                variant="text"
+                @click="handleUnlink(service)"
+              >
+                Desvincular ao App
+              </v-btn>
             </v-card-actions>
           </v-card>
         </v-col>
@@ -214,6 +223,16 @@
       await fetchServices()
     } finally {
       deletingId.value = null
+    }
+  }
+
+  async function handleUnlink (service: Service) {
+    if (!service.id || !confirm('Desvincular este serviço?')) return
+    try {
+      await ServicesService.unlinkService(service.id)
+      await fetchServices()
+    } catch (error) {
+      console.error('Erro ao desvincular serviço:', error)
     }
   }
 </script>
