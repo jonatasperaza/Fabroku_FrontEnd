@@ -37,7 +37,6 @@
             color="primary"
             prepend-icon="mdi-database"
             :to="`/projects/${projectId}/services`"
-            variant="tonal"
           >
             Serviços
           </v-btn>
