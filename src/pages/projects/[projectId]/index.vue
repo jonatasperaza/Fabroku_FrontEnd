@@ -15,7 +15,21 @@
       <h1 class="text-h4 mb-4">{{ currentProject.name }}</h1>
 
       <v-card class="mb-6">
-        <v-card-title>Detalhes do Projeto</v-card-title>
+        <v-card-title>
+          <div class="d-flex justify-space-between align-center">
+            <span>Detalhes do Projeto</span>
+
+            <v-btn
+              v-if="canManageTeam"
+              color="primary"
+              prepend-icon="mdi-account-multiple-plus"
+              @click="openTeamDialog"
+            >
+              Gerenciar equipe
+            </v-btn>
+          </div>
+
+        </v-card-title>
         <v-card-text>
           <p><strong>ID:</strong> {{ currentProject.id }}</p>
           <p>
@@ -26,19 +40,15 @@
             <strong>Atualizado em:</strong>
             {{ formatDate(currentProject.updated_at) }}
           </p>
-        </v-card-text>
-      </v-card>
-
-      <v-card class="mb-6">
-        <v-card-title class="d-flex align-center justify-space-between flex-wrap ga-2">
-          <span>Equipe do Projeto</span>
-          <v-chip color="primary" size="small" variant="tonal">
-            {{ currentTeamIds.length }} membro(s)
-          </v-chip>
-        </v-card-title>
-        <v-card-text>
-          <div class="mb-4">
-            <div class="text-subtitle-2 mb-2">Membros atuais</div>
+          <div class="mt-4">
+            <div class="d-flex justify-space-between align-center flex-wrap ga-2 mb-2">
+              <div class="d-flex align-center ga-2 flex-wrap">
+                <strong>Membros atuais:</strong>
+                <v-chip color="primary" size="small" variant="tonal">
+                  {{ currentTeamIds.length }} membro(s)
+                </v-chip>
+              </div>
+            </div>
             <div class="d-flex flex-wrap ga-2">
               <v-chip
                 v-for="user in currentProject.users_detail || []"
@@ -50,10 +60,18 @@
               </v-chip>
             </div>
           </div>
+        </v-card-text>
+      </v-card>
 
-          <template v-if="canManageTeam">
-            <v-divider class="mb-4" />
-
+      <v-dialog v-model="teamDialog" max-width="760">
+        <v-card>
+          <v-card-title class="d-flex align-center justify-space-between flex-wrap ga-2">
+            <span>Gerenciar equipe</span>
+            <v-chip color="primary" size="small" variant="tonal">
+              {{ selectedTeamIds.length }} membro(s)
+            </v-chip>
+          </v-card-title>
+          <v-card-text>
             <p class="text-body-2 mb-3">
               {{ teamManagerHint }}
             </p>
@@ -138,32 +156,35 @@
             >
               {{ teamFeedback.message }}
             </v-alert>
-          </template>
+          </v-card-text>
 
-          <v-alert v-else type="info" variant="tonal">
-            Voce precisa fazer parte do projeto para editar a equipe.
-          </v-alert>
-        </v-card-text>
-
-        <v-card-actions v-if="canManageTeam" class="px-6 pb-6 pt-0">
-          <v-spacer />
-          <v-btn
-            :disabled="!hasTeamChanges || teamSaving"
-            variant="text"
-            @click="resetTeamSelection"
-          >
-            Descartar
-          </v-btn>
-          <v-btn
-            color="primary"
-            :disabled="!hasTeamChanges || !selectedTeamIds.length"
-            :loading="teamSaving"
-            @click="saveTeamChanges"
-          >
-            Salvar equipe
-          </v-btn>
-        </v-card-actions>
-      </v-card>
+          <v-card-actions class="px-6 pb-6 pt-0">
+            <v-spacer />
+            <v-btn
+              :disabled="teamSaving"
+              variant="text"
+              @click="closeTeamDialog"
+            >
+              Cancelar
+            </v-btn>
+            <v-btn
+              :disabled="!hasTeamChanges || teamSaving"
+              variant="text"
+              @click="resetTeamSelection"
+            >
+              Descartar
+            </v-btn>
+            <v-btn
+              color="primary"
+              :disabled="!hasTeamChanges || !selectedTeamIds.length"
+              :loading="teamSaving"
+              @click="saveTeamChanges"
+            >
+              Salvar equipe
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
 
       <div class="d-flex justify-space-between align-center mb-4 flex-wrap ga-2">
         <h2 class="text-h5">Apps deste Projeto</h2>
@@ -258,6 +279,7 @@
   const authStore = useAuthStore()
 
   const loading = ref(true)
+  const teamDialog = ref(false)
   const teamSaving = ref(false)
   const teamSearching = ref(false)
   const teamSearchQuery = ref('')
@@ -429,6 +451,15 @@
 
   function resetTeamSelection () {
     initializeTeamSelection(currentProject.value)
+  }
+
+  function openTeamDialog () {
+    initializeTeamSelection(currentProject.value)
+    teamDialog.value = true
+  }
+
+  function closeTeamDialog () {
+    teamDialog.value = false
   }
 
   async function saveTeamChanges () {
