@@ -27,6 +27,13 @@ class UsersService {
     return response.data
   }
 
+  async toggleAdmin (id: number): Promise<User> {
+    const response = await apiClient.post<User>(
+      `/auth/users/${id}/toggle_admin/`,
+    )
+    return response.data
+  }
+
   async setQuota (
     id: number,
     quota: { max_apps?: number | null, max_services?: number | null },

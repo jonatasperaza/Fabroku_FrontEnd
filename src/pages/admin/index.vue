@@ -224,33 +224,49 @@
                 </v-chip>
               </td>
               <td class="text-center">
-                <v-btn
-                  class="mr-1"
-                  :disabled="u.is_superuser"
-                  icon
-                  size="small"
-                  variant="text"
-                  @click="openQuotaDialog(u)"
-                >
-                  <v-icon size="18">mdi-tune</v-icon>
-                  <v-tooltip
-                    activator="parent"
-                    location="top"
-                  >Ajustar limites</v-tooltip>
-                </v-btn>
-                <v-btn
-                  :color="u.is_active ? 'error' : 'success'"
-                  :disabled="u.is_superuser"
-                  :loading="togglingUserId === u.id"
-                  size="small"
-                  variant="tonal"
-                  @click="handleToggleActive(u)"
-                >
-                  <v-icon start>{{
-                    u.is_active ? "mdi-account-off" : "mdi-account-check"
-                  }}</v-icon>
-                  {{ u.is_active ? "Desabilitar" : "Habilitar" }}
-                </v-btn>
+                <div class="d-flex justify-center align-center flex-wrap ga-2">
+                  <v-btn
+                    :color="u.is_superuser ? 'warning' : 'grey'"
+                    :disabled="isCurrentUser(u)"
+                    :loading="togglingAdminUserId === u.id"
+                    size="small"
+                    variant="tonal"
+                    @click="handleToggleAdmin(u)"
+                  >
+                    <v-icon start>{{
+                      u.is_superuser
+                        ? "mdi-shield-off-outline"
+                        : "mdi-shield-crown-outline"
+                    }}</v-icon>
+                    {{ u.is_superuser ? "Remover admin" : "Tornar admin" }}
+                  </v-btn>
+                  <v-btn
+                    :disabled="u.is_superuser"
+                    icon
+                    size="small"
+                    variant="text"
+                    @click="openQuotaDialog(u)"
+                  >
+                    <v-icon size="18">mdi-tune</v-icon>
+                    <v-tooltip
+                      activator="parent"
+                      location="top"
+                    >Ajustar limites</v-tooltip>
+                  </v-btn>
+                  <v-btn
+                    :color="u.is_active ? 'error' : 'success'"
+                    :disabled="u.is_superuser"
+                    :loading="togglingUserId === u.id"
+                    size="small"
+                    variant="tonal"
+                    @click="handleToggleActive(u)"
+                  >
+                    <v-icon start>{{
+                      u.is_active ? "mdi-account-off" : "mdi-account-check"
+                    }}</v-icon>
+                    {{ u.is_active ? "Desabilitar" : "Habilitar" }}
+                  </v-btn>
+                </div>
               </td>
             </tr>
             <tr v-if="filteredUsers.length === 0">
@@ -430,8 +446,9 @@
 
   import AdminService from '@/services/admin'
   import UsersService from '@/services/users'
-  import { useProjectStore } from '@/stores'
+  import { useAuthStore, useProjectStore } from '@/stores'
 
+  const authStore = useAuthStore()
   const projectStore = useProjectStore()
   const activeTab = ref('projects')
   const filterSelection = ref('all')
@@ -444,6 +461,7 @@
   const usersLoading = ref(false)
   const userSearch = ref('')
   const togglingUserId = ref<number | null>(null)
+  const togglingAdminUserId = ref<number | null>(null)
 
   const deleteDialog = ref(false)
   const projectToDelete = ref<Project | null>(null)
@@ -552,6 +570,22 @@
     } finally {
       togglingUserId.value = null
     }
+  }
+
+  async function handleToggleAdmin (user: User) {
+    if (!user.id || isCurrentUser(user)) return
+    togglingAdminUserId.value = user.id
+    try {
+      const updated = await UsersService.toggleAdmin(user.id)
+      const idx = users.value.findIndex(u => u.id === user.id)
+      if (idx !== -1) users.value[idx] = updated
+    } finally {
+      togglingAdminUserId.value = null
+    }
+  }
+
+  function isCurrentUser (user: User) {
+    return Boolean(user.id && authStore.user?.id === user.id)
   }
 
   function getQuotaColor (current?: number, max?: number | null): string {
