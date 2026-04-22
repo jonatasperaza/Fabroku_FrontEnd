@@ -94,10 +94,10 @@
               @update:search="handleTeamSearch"
             >
               <template #chip="{ item, props: chipProps }">
-                <v-chip v-bind="chipProps">
-                  <v-avatar v-if="item.raw.avatar_url" size="24" start>
-                    <v-img :src="item.raw.avatar_url" />
-                  </v-avatar>
+                <v-chip
+                  v-bind="chipProps"
+                  :prepend-avatar="item.raw.avatar_url || undefined"
+                >
                   {{ formatUserName(item.raw) }}
                 </v-chip>
               </template>
@@ -111,7 +111,6 @@
                       <v-icon>mdi-account</v-icon>
                     </v-avatar>
                   </template>
-                  <v-list-item-title>{{ formatUserName(item.raw) }}</v-list-item-title>
                   <v-list-item-subtitle v-if="item.raw.email">
                     {{ item.raw.email }}
                   </v-list-item-subtitle>
