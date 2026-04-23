@@ -326,6 +326,76 @@
       </v-card>
     </section>
 
+    <!-- Run -->
+    <section :id="'run'" class="mb-6">
+      <v-card>
+        <v-card-title class="d-flex align-center">
+          <v-icon class="mr-2" color="teal">mdi-database-sync</v-icon>
+          Importar e Exportar Dados
+        </v-card-title>
+        <v-card-text>
+          <v-card class="mb-4" variant="tonal">
+            <v-card-title class="text-subtitle-1">
+              <code>fabroku run loaddata</code>
+            </v-card-title>
+            <v-card-text>
+              <p class="mb-3">
+                Envia um fixture JSON local para o backend e executa
+                <code>loaddata</code> dentro do container do app Django.
+              </p>
+              <FlagTable :flags="runLoaddataFlags" />
+
+              <v-alert
+                class="mt-3"
+                density="compact"
+                type="info"
+                variant="tonal"
+              >
+                Nesta versao, o fluxo e exclusivo para Django e exige a flag
+                <code>--django</code>. O arquivo deve ser JSON UTF-8 e ter até
+                <code>50 MB</code>.
+              </v-alert>
+
+              <CodeBlock
+                class="mt-3"
+                :code="`# Fixture na raiz do projeto\nfabroku run loaddata --django ./my_data.json\n\n# Especificando o app manualmente\nfabroku run loaddata --django ./my_data.json --app minha-api\n\n# manage.py fora da raiz do container\nfabroku run loaddata --django ./fixtures/users.json --dir ./backend --manage src/manage.py`"
+              />
+            </v-card-text>
+          </v-card>
+
+          <v-card variant="tonal">
+            <v-card-title class="text-subtitle-1">
+              <code>fabroku run dumpdata</code>
+            </v-card-title>
+            <v-card-text>
+              <p class="mb-3">
+                Executa <code>dumpdata</code> no app Django, gera o JSON no
+                container e baixa o resultado para o caminho local informado em
+                <code>--output</code>.
+              </p>
+              <FlagTable :flags="runDumpdataFlags" />
+
+              <v-alert
+                class="mt-3"
+                density="compact"
+                type="info"
+                variant="tonal"
+              >
+                Os argumentos do Django devem vir depois de <code>--</code>,
+                para nao conflitar com as flags da CLI. O arquivo de saida local
+                e obrigatorio.
+              </v-alert>
+
+              <CodeBlock
+                class="mt-3"
+                :code="`# Dump completo para arquivo local\nfabroku run dumpdata --django --output ./dump.json\n\n# Com filtros e flags do Django após --\nfabroku run dumpdata --django --output ./users.json -- --indent 2 auth.User\n\n# Usando app detectado por git remote e manage.py customizado\nfabroku run dumpdata --django --dir ./backend --manage src/manage.py --output ./backups/auth.json -- auth.User`"
+              />
+            </v-card-text>
+          </v-card>
+        </v-card-text>
+      </v-card>
+    </section>
+
     <!-- Webhook -->
     <section :id="'webhook'" class="mb-6">
       <v-card>
@@ -446,7 +516,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="issue in troubleshooting" :key="issue.problem">
+              <tr v-for="issue in troubleshootingRows" :key="issue.problem">
                 <td>
                   <code>{{ issue.problem }}</code>
                 </td>
@@ -479,7 +549,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="ep in endpoints" :key="ep.endpoint">
+              <tr v-for="ep in apiEndpoints" :key="ep.endpoint">
                 <td>
                   <v-chip
                     :color="ep.method === 'GET' ? 'success' : 'warning'"
@@ -597,6 +667,7 @@
     { id: 'verificacao', label: 'Verificação', icon: 'mdi-file-check' },
     { id: 'apps', label: 'Apps', icon: 'mdi-view-list' },
     { id: 'deploy', label: 'Deploy', icon: 'mdi-rocket-launch' },
+    { id: 'run', label: 'Run', icon: 'mdi-database-sync' },
     { id: 'webhook', label: 'Webhook', icon: 'mdi-webhook' },
     { id: 'workflow', label: 'Workflow', icon: 'mdi-map-marker-path' },
     { id: 'configuracao', label: 'Configuração', icon: 'mdi-cog' },
@@ -705,6 +776,61 @@
     { text: 'Exibe resultado: URL do domínio ou erro', color: 'success' },
   ]
 
+  const runLoaddataFlags = [
+    {
+      flag: '--django',
+      desc: 'Ativa o fluxo Django para loaddata',
+      default: 'obrigatorio',
+    },
+    {
+      flag: '-a, --app <name>',
+      desc: 'Nome ou ID do app',
+      default: 'auto-detecta via git',
+    },
+    {
+      flag: '-d, --dir <path>',
+      desc: 'Diretorio local usado para detectar o app',
+      default: '. (atual)',
+    },
+    {
+      flag: '--manage <path>',
+      desc: 'Caminho relativo do manage.py dentro do app',
+      default: 'manage.py',
+    },
+  ]
+
+  const runDumpdataFlags = [
+    {
+      flag: '--django',
+      desc: 'Ativa o fluxo Django para dumpdata',
+      default: 'obrigatorio',
+    },
+    {
+      flag: '-o, --output <path>',
+      desc: 'Arquivo JSON local onde o dump sera salvo',
+      default: 'obrigatorio',
+    },
+    {
+      flag: '-a, --app <name>',
+      desc: 'Nome ou ID do app',
+      default: 'auto-detecta via git',
+    },
+    {
+      flag: '-d, --dir <path>',
+      desc: 'Diretorio local usado para detectar o app',
+      default: '. (atual)',
+    },
+    {
+      flag: '--manage <path>',
+      desc: 'Caminho relativo do manage.py dentro do app',
+      default: 'manage.py',
+    },
+    {
+      flag: '-- [args]',
+      desc: 'Argumentos repassados diretamente ao Django dumpdata',
+    },
+  ]
+
   const webhookFlags = [
     { flag: '--setup', desc: 'Criar/recriar o webhook automaticamente' },
     { flag: '--test', desc: 'Testar se commit status funciona' },
@@ -795,6 +921,14 @@
       solution: 'Use fabroku verify --fix',
     },
     {
+      problem: 'âŒ Fixture JSON invÃ¡lido ou maior que 50 MB',
+      solution: 'Revise o arquivo e reduza o tamanho antes de usar fabroku run loaddata',
+    },
+    {
+      problem: 'âŒ dumpdata sem --output',
+      solution: 'Informe um caminho local com --output ./arquivo.json',
+    },
+    {
       problem: 'requirements.txt faltando',
       solution: 'Crie manualmente: pip freeze > requirements.txt',
     },
@@ -845,6 +979,21 @@
     },
     {
       method: 'GET',
+      endpoint: '/api/apps/apps/{id}/run_loaddata/',
+      desc: 'Upload do fixture e execuÃ§Ã£o do loaddata',
+    },
+    {
+      method: 'POST',
+      endpoint: '/api/apps/apps/{id}/run_dumpdata/',
+      desc: 'ExecuÃ§Ã£o do dumpdata com geraÃ§Ã£o de artefato',
+    },
+    {
+      method: 'GET',
+      endpoint: '/api/apps/apps/{id}/artifacts/{artifact_id}/download/',
+      desc: 'Download do dump gerado pela CLI',
+    },
+    {
+      method: 'GET',
       endpoint: '/api/apps/apps/{id}/diagnose_webhook/',
       desc: 'Diagnóstico de webhook',
     },
@@ -852,6 +1001,113 @@
       method: 'POST',
       endpoint: '/api/apps/apps/{id}/setup_webhook/',
       desc: 'Criar/recriar webhook',
+    },
+    {
+      method: 'POST',
+      endpoint: '/api/apps/apps/{id}/test_commit_status/',
+      desc: 'Testar commit status',
+    },
+  ]
+
+  const troubleshootingRows = [
+    { problem: 'Nao autenticado', solution: 'Execute fabroku login' },
+    {
+      problem: 'Token expirado ou invalido',
+      solution: 'Execute fabroku login novamente',
+    },
+    {
+      problem: 'Timeout na autenticacao (2min)',
+      solution: 'Verifique se o browser abriu e tente novamente',
+    },
+    {
+      problem: 'Tipo de projeto nao detectado',
+      solution: 'Use --type frontend ou --type backend',
+    },
+    {
+      problem: 'Arquivos faltando para deploy',
+      solution: 'Use fabroku verify --fix',
+    },
+    {
+      problem: 'Fixture JSON invalido ou maior que 50 MB',
+      solution: 'Revise o arquivo e reduza o tamanho antes de usar fabroku run loaddata',
+    },
+    {
+      problem: 'dumpdata sem --output',
+      solution: 'Informe um caminho local com --output ./arquivo.json',
+    },
+    {
+      problem: 'requirements.txt faltando',
+      solution: 'Crie manualmente: pip freeze > requirements.txt',
+    },
+    {
+      problem: 'Nenhum app encontrado',
+      solution: 'Verifique git remote -v ou use --app <nome>',
+    },
+    {
+      problem: 'HTTP 409 no deploy',
+      solution: 'Deploy ja em andamento, aguarde',
+    },
+    {
+      problem: 'Webhook nao funciona',
+      solution: 'Use fabroku webhook <id> --test para diagnosticar',
+    },
+    {
+      problem: 'Deploy timeout (10min)',
+      solution: 'Verifique os logs no painel web',
+    },
+  ]
+
+  const apiEndpoints = [
+    {
+      method: 'GET',
+      endpoint: '/api/auth/check/',
+      desc: 'Verifica autenticacao',
+    },
+    {
+      method: 'GET',
+      endpoint: '/api/auth/users/me/',
+      desc: 'Dados do usuario logado',
+    },
+    { method: 'GET', endpoint: '/api/apps/apps/', desc: 'Lista apps' },
+    {
+      method: 'GET',
+      endpoint: '/api/projects/projects/',
+      desc: 'Lista projetos',
+    },
+    {
+      method: 'POST',
+      endpoint: '/api/apps/apps/{id}/redeploy/',
+      desc: 'Dispara redeploy',
+    },
+    {
+      method: 'GET',
+      endpoint: '/api/apps/apps/{id}/get_app_status/',
+      desc: 'Status e progresso do deploy',
+    },
+    {
+      method: 'POST',
+      endpoint: '/api/apps/apps/{id}/run_loaddata/',
+      desc: 'Upload do fixture e execucao do loaddata',
+    },
+    {
+      method: 'POST',
+      endpoint: '/api/apps/apps/{id}/run_dumpdata/',
+      desc: 'Execucao do dumpdata com geracao de artefato',
+    },
+    {
+      method: 'GET',
+      endpoint: '/api/apps/apps/{id}/artifacts/{artifact_id}/download/',
+      desc: 'Download do dump gerado pela CLI',
+    },
+    {
+      method: 'GET',
+      endpoint: '/api/apps/apps/{id}/diagnose_webhook/',
+      desc: 'Diagnostico de webhook',
+    },
+    {
+      method: 'POST',
+      endpoint: '/api/apps/apps/{id}/setup_webhook/',
+      desc: 'Criar ou recriar webhook',
     },
     {
       method: 'POST',
